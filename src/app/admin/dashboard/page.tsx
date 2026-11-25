@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "./logout-button";
 
+// =====================================
+// TYPES
+// =====================================
+
 // Admin user information
 type Admin = {
   id: number;
@@ -21,39 +25,64 @@ type Summary = {
   total_location_admins: number;
 };
 
+// =====================================
+// DASHBOARD CONTENT
+// =====================================
+
 async function DashboardContent() {
-  // Step 1: Read the admin session cookie
+  // ---------------------------------
+  // 1. Read admin session cookie
+  // ---------------------------------
+
   const session = (await cookies()).get(
     "avail_admin_session"
   )?.value;
 
-  // Redirect unauthenticated users to login
   if (!session) {
     redirect("/admin/login");
   }
 
-  // Step 2: Backend API configuration
-  const apiUrl =
-    process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
+  // ---------------------------------
+  // 2. Backend URL from .env.local
+  // ---------------------------------
 
+  const apiUrl = process.env.API_BASE_URL;
+
+  if (!apiUrl) {
+    throw new Error(
+      "API_BASE_URL is not configured in .env.local"
+    );
+  }
+
+  // Forward authenticated session to FastAPI.
   const headers = {
     Cookie: `avail_admin_session=${session}`,
   };
 
-  // Step 3: Fetch admin profile and dashboard statistics
-  const [adminResponse, summaryResponse] = await Promise.all([
-    fetch(`${apiUrl}/api/v1/auth/me`, {
-      headers,
-      cache: "no-store",
-    }),
+  // ---------------------------------
+  // 3. Fetch admin and dashboard data
+  // ---------------------------------
 
-    fetch(`${apiUrl}/api/v1/admin/dashboard/summary`, {
-      headers,
-      cache: "no-store",
-    }),
-  ]);
+  const [adminResponse, summaryResponse] =
+    await Promise.all([
+      fetch(`${apiUrl}/api/v1/auth/me`, {
+        headers,
+        cache: "no-store",
+      }),
 
-  // Step 4: Verify authentication
+      fetch(
+        `${apiUrl}/api/v1/admin/dashboard/summary`,
+        {
+          headers,
+          cache: "no-store",
+        }
+      ),
+    ]);
+
+  // ---------------------------------
+  // 4. Authentication validation
+  // ---------------------------------
+
   if (
     adminResponse.status === 401 ||
     summaryResponse.status === 401
@@ -61,34 +90,48 @@ async function DashboardContent() {
     redirect("/admin/login");
   }
 
-  // Step 5: Verify Super Admin permission
+  // ---------------------------------
+  // 5. Super Admin permission
+  // ---------------------------------
+
   if (
     adminResponse.status === 403 ||
     summaryResponse.status === 403
   ) {
     return (
-      <main className="p-10">
-        Access denied. Super Admin permission required.
+      <main className="min-h-screen bg-[#F7F5F1] p-10">
+        <p className="text-stone-900">
+          Access denied. Super Admin permission required.
+        </p>
       </main>
     );
   }
 
   if (!adminResponse.ok || !summaryResponse.ok) {
-    throw new Error("Unable to load admin dashboard");
+    throw new Error(
+      "Unable to load admin dashboard"
+    );
   }
 
   const admin: Admin = await adminResponse.json();
-  const summary: Summary = await summaryResponse.json();
+
+  const summary: Summary =
+    await summaryResponse.json();
 
   if (admin.role !== "super_admin") {
     return (
-      <main className="p-10">
-        Access denied. Super Admin permission required.
+      <main className="min-h-screen bg-[#F7F5F1] p-10">
+        <p className="text-stone-900">
+          Access denied. Super Admin permission required.
+        </p>
       </main>
     );
   }
 
-  // Step 6: Dashboard statistic cards
+  // ---------------------------------
+  // 6. Dashboard statistics
+  // ---------------------------------
+
   const cards = [
     {
       title: "Total Locations",
@@ -108,11 +151,18 @@ async function DashboardContent() {
     },
   ];
 
+  // ---------------------------------
+  // 7. Render dashboard
+  // ---------------------------------
+
   return (
     <main className="min-h-screen bg-[#F7F5F1] px-6 py-10">
       <div className="mx-auto max-w-6xl">
 
-        {/* Dashboard Header */}
+        {/* =====================================
+            DASHBOARD HEADER
+        ===================================== */}
+
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
             <p className="text-sm text-stone-500">
@@ -128,11 +178,13 @@ async function DashboardContent() {
             </p>
           </div>
 
-          {/* Logout Button */}
           <LogoutButton />
         </div>
 
-        {/* Dashboard Statistics */}
+        {/* =====================================
+            DASHBOARD STATISTICS
+        ===================================== */}
+
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((card) => (
             <div
@@ -150,17 +202,22 @@ async function DashboardContent() {
           ))}
         </div>
 
-        {/* Clinic Location Management */}
+        {/* =====================================
+            CLINIC LOCATION MANAGEMENT
+        ===================================== */}
+
         <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
             <div>
               <h2 className="text-xl font-semibold text-stone-900">
                 Clinic Location Management
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-stone-500">
-                View and manage clinic locations, including their
-                publication status and availability.
+                View and manage clinic locations,
+                including their publication status
+                and availability.
               </p>
             </div>
 
@@ -169,10 +226,51 @@ async function DashboardContent() {
               className="inline-flex shrink-0 items-center justify-center rounded-lg bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
             >
               Manage Locations
-              <span aria-hidden="true" className="ml-2">
-                →
+
+              <span
+                aria-hidden="true"
+                className="ml-2"
+              >
+                &rarr;
               </span>
             </Link>
+
+          </div>
+        </section>
+
+        {/* =====================================
+            GLOBAL HOMEPAGE CMS - NEW
+        ===================================== */}
+
+        <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+              <h2 className="text-xl font-semibold text-stone-900">
+                Global Homepage CMS
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-500">
+                Manage the global homepage banner,
+                review saved draft content,
+                and monitor publication status.
+              </p>
+            </div>
+
+            <Link
+              href="/admin/homepage/hero"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
+            >
+              Manage Homepage Hero
+
+              <span
+                aria-hidden="true"
+                className="ml-2"
+              >
+                &rarr;
+              </span>
+            </Link>
+
           </div>
         </section>
 
@@ -181,12 +279,18 @@ async function DashboardContent() {
   );
 }
 
+// =====================================
+// PAGE EXPORT
+// =====================================
+
 export default function AdminDashboardPage() {
   return (
     <Suspense
       fallback={
-        <main className="p-10">
-          Loading dashboard...
+        <main className="min-h-screen bg-[#F7F5F1] p-10">
+          <p className="text-stone-600">
+            Loading dashboard...
+          </p>
         </main>
       }
     >

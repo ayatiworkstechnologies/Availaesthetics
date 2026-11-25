@@ -20,6 +20,8 @@ from app.api.admin_publication_history import (
 from app.api.public_published_locations import (
     router as public_published_locations_router,
 )
+from app.api import public_homepage
+from app.api import admin_homepage
 
 app = FastAPI(
     title="Avail Aesthetics MD API",
@@ -45,3 +47,5 @@ app.include_router(admin_operating_hours_router)
 app.include_router(publishing_readiness_router)
 app.include_router(publication_history_router)
 app.include_router(public_published_locations_router)
+app.include_router(public_homepage.router)
+app.include_router(admin_homepage.router)
