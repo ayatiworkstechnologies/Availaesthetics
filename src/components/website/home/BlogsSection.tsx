@@ -199,8 +199,12 @@ export default function BlogsSection({
   // RESET WHEN BLOG DATA CHANGES
   useEffect(() => {
     movingRef.current = false;
-    setAnimate(false);
-    setPosition(canLoop ? total : 0);
+    const frame = requestAnimationFrame(() => {
+      setAnimate(false);
+      setPosition(canLoop ? total : 0);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [total, canLoop, blogs]);
 
   // RESPONSIVE CARD COUNT

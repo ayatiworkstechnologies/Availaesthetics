@@ -2,21 +2,23 @@
 import { notFound } from "next/navigation";
 
 import SiteHeader from "@/components/website/layout/SiteHeader";
+import SiteFooter from "@/components/website/layout/SiteFooter";
+
 import HeroSection from "@/components/website/home/HeroSection";
 import ExploreByCategory from "@/components/website/home/ExploreByCategory";
 import SignatureAesthetics from "@/components/website/home/SignatureAesthetics";
 import TestimonialsSection from "@/components/website/home/TestimonialsSection";
 import WhyAvailSection from "@/components/website/home/WhyAvailSection";
-
-import {
-  homepageHero,
-} from "@/lib/cms/homepage-preview";
 import OurLocationsSection from "@/components/website/home/OurLocationsSection";
 import FaqSection from "@/components/website/home/FaqSection";
 import BlogsSection from "@/components/website/home/BlogsSection";
-import SiteFooter from "@/components/website/layout/SiteFooter";
+
+import { homepageHero } from "@/lib/cms/homepage-preview";
 
 export default function HomePreviewPage() {
+  // Development-only preview.
+  // Prevent this route from being publicly accessible
+  // in the production environment.
   if (process.env.NODE_ENV !== "development") {
     notFound();
   }
@@ -25,30 +27,34 @@ export default function HomePreviewPage() {
     <div className="min-h-screen bg-white">
       <SiteHeader />
 
-      <main>
-        {/* 1. Homepage Hero */}
+      <main id="main-content">
+        {/* 1. HOMEPAGE HERO */}
         <HeroSection content={homepageHero} />
 
-        {/* 2. Explore by Category */}
+        {/* 2. EXPLORE BY CATEGORY */}
         <ExploreByCategory />
 
-        {/* 3. Signature Aesthetics */}
+        {/* 3. SIGNATURE AESTHETICS */}
         <SignatureAesthetics />
 
-        {/* 4. Client Testimonials */}
+        {/* 4. TESTIMONIALS */}
         <TestimonialsSection />
 
-        {/* 5. Why Avail Aesthetics MD */}
+        {/* 5. WHY AVAIL AESTHETICS MD */}
         <WhyAvailSection />
-        {/* {6 Our Location} */}
+
+        {/* 6. OUR LOCATIONS */}
         <OurLocationsSection />
-        {/* {7 Faq section} */}
+
+        {/* 7. FAQ */}
         <FaqSection />
-        {/* { 8 Blog Section} */}
+
+        {/* 8. BLOGS */}
         <BlogsSection />
-        {/* {9 footer section} */}
-        <SiteFooter />
       </main>
+
+      {/* 9. FOOTER - OUTSIDE MAIN */}
+      <SiteFooter homeHref="/dev/home-preview" />
     </div>
   );
 }

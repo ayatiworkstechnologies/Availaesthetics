@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,10 +18,10 @@ import {
 // FOOTER LOGO
 // =====================================
 
-function FooterLogo() {
+function FooterLogo({ homeHref }: { homeHref: string }) {
   return (
     <Link
-      href="/"
+      href={homeHref}
       aria-label="Avail Aesthetics MD homepage"
       className="
         group relative block
@@ -318,17 +318,22 @@ function FooterColumn({
 // MAIN SITE FOOTER
 // =====================================
 
-export default function SiteFooter() {
-  // Stable value used during server prerender.
-  const [currentYear, setCurrentYear] =
-    useState(2026);
+type SiteFooterProps = {
+  homeHref?: string;
+};
 
-  // Calculate the actual year only after
-  // the component mounts in the browser.
-  // This avoids the Next.js 16 prerender error.
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
-  }, []);
+const subscribeToYear = () => () => {};
+
+export default function SiteFooter({
+  homeHref = "/",
+}: SiteFooterProps) {
+  // Keep server output deterministic while reading the browser year after
+  // hydration. useSyncExternalStore avoids a state update inside an effect.
+  const currentYear = useSyncExternalStore(
+    subscribeToYear,
+    () => new Date().getFullYear(),
+    () => 2026
+  );
 
   return (
     <footer
@@ -384,7 +389,7 @@ export default function SiteFooter() {
               lg:pr-5
             "
           >
-            <FooterLogo />
+            <FooterLogo homeHref={homeHref} />
 
             <p
               className="
@@ -460,7 +465,33 @@ export default function SiteFooter() {
             </span>
 
             <span className="block sm:inline">
-              Designed by ayatiworks
+              Designed by{" "}
+              <a
+                href="https://ayatiworks.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit AYATIWORKS website"
+                className="
+      inline-block
+      cursor-pointer
+      font-semibold
+      uppercase
+      tracking-[0.05em]
+      text-[#A4B4C1]
+      transition-all
+      duration-300
+      ease-out
+      hover:text-[#83DCE5]
+      hover:underline
+      hover:underline-offset-4
+      focus-visible:rounded-sm
+      focus-visible:outline-2
+      focus-visible:outline-offset-2
+      focus-visible:outline-[#83DCE5]
+    "
+              >
+                AYATIWORKS
+              </a>
             </span>
           </p>
 

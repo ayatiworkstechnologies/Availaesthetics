@@ -24,28 +24,18 @@ type MenuKey = "aesthetics" | "wellness" | "locations";
 
 type NavigationItem = {
     label: string;
-    href?: string;
+    href?: string | null;
     menu?: MenuKey;
 };
 
 const navigation: NavigationItem[] = [
     { label: "AESTHETICS", menu: "aesthetics" },
     { label: "WELLNESS", menu: "wellness" },
-    { label: "CONCERNS", href: "/concerns" },
-    { label: "ABOUT", href: "/about" },
-    { label: "MEMBERSHIP", href: "/membership" },
+    { label: "CONCERNS", href: null },
+    { label: "ABOUT", href: null },
+    { label: "MEMBERSHIP", href: null },
     { label: "LOCATIONS", menu: "locations" },
 ];
-
-// Preview URL convention.
-// Replace with published CMS routes when available.
-function toSlug(value: string): string {
-    return value
-        .toLowerCase()
-        .replace(/®/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-}
 
 // ----------------------------------------
 // SVG Icons
@@ -266,20 +256,13 @@ function AestheticsMegaMenu({
                     className="grid w-full max-w-[510px] grid-flow-col grid-cols-2 grid-rows-4 gap-x-9 gap-y-3 motion-safe:animate-[availMenuReveal_250ms_ease-out]"
                 >
                     {activeCategory.treatments.map((treatment) => (
-                        <Link
+                        <span
                             key={treatment}
-                            href={`/treatments/${toSlug(treatment)}`}
-                            className="group inline-flex min-h-6 w-fit cursor-pointer items-center gap-2 text-[12px] leading-5 text-[#222222] transition-[color,transform] duration-200 ease-out hover:translate-x-1 hover:text-[#0B253B] focus-visible:underline xl:text-[13px]"
+                            title="Treatment page pending CMS URL"
+                            className="inline-flex min-h-6 w-fit items-center text-[12px] leading-5 text-[#222222] xl:text-[13px]"
                         >
                             <span>{treatment}</span>
-
-                            <span
-                                aria-hidden="true"
-                                className="-translate-x-1 text-[#0B253B] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                            >
-                                <ArrowRightIcon />
-                            </span>
-                        </Link>
+                        </span>
                     ))}
                 </div>
             </div>
@@ -291,11 +274,7 @@ function AestheticsMegaMenu({
 // Mobile Aesthetics Category Accordion
 // ----------------------------------------
 
-function MobileAestheticsMenu({
-    onNavigate,
-}: {
-    onNavigate: () => void;
-}) {
+function MobileAestheticsMenu() {
     const [activeCategory, setActiveCategory] =
         useState<number | null>(0);
 
@@ -331,14 +310,13 @@ function MobileAestheticsMenu({
                                 className="space-y-1 pb-4 pl-3 motion-safe:animate-[availMenuReveal_250ms_ease-out]"
                             >
                                 {category.treatments.map((treatment) => (
-                                    <Link
+                                    <span
                                         key={treatment}
-                                        href={`/treatments/${toSlug(treatment)}`}
-                                        onClick={onNavigate}
-                                        className="block cursor-pointer py-2 text-sm text-[#222222] transition-colors duration-200 hover:text-[#0B253B] hover:underline"
+                                        title="Treatment page pending CMS URL"
+                                        className="block py-2 text-sm text-[#222222]"
                                     >
                                         {treatment}
-                                    </Link>
+                                    </span>
                                 ))}
                             </div>
                         )}
@@ -469,7 +447,7 @@ export default function SiteHeader() {
                                 className="inline-flex items-center gap-2"
                             >
                                 <Link
-                                    href={`/locations/${toSlug(name)}`}
+                                    href="#our-locations"
                                     className="cursor-pointer transition-colors duration-200 hover:text-[#9AEFF0] hover:underline"
                                 >
                                     {name.toUpperCase()}
@@ -583,10 +561,22 @@ export default function SiteHeader() {
                             }
 
                             // Standard navigation links
+                            if (!item.href) {
+                                return (
+                                    <span
+                                        key={item.label}
+                                        title={`${item.label} page pending CMS URL`}
+                                        className="inline-flex min-h-12 items-center whitespace-nowrap text-xs font-semibold tracking-[0.025em] text-[#0B253B]"
+                                    >
+                                        {item.label}
+                                    </span>
+                                );
+                            }
+
                             return (
                                 <Link
                                     key={item.label}
-                                    href={item.href ?? "/"}
+                                    href={item.href}
                                     onMouseEnter={() => setDesktopMenu(null)}
                                     className="group relative inline-flex min-h-12 cursor-pointer items-center whitespace-nowrap text-xs font-semibold tracking-[0.025em] text-[#0B253B] transition-colors duration-200 hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B253B]"
                                 >
@@ -676,7 +666,8 @@ export default function SiteHeader() {
                                     {clinicNames.map((name) => (
                                         <Link
                                             key={name}
-                                            href={`/locations/${toSlug(name)}`}
+                                            href="#our-locations"
+                                            onClick={closeMenus}
                                             className="group flex cursor-pointer items-center justify-between rounded-lg border border-[#0B253B]/10 px-5 py-4 text-sm font-medium text-[#0B253B] transition-colors duration-200 hover:bg-[#0B253B]/5"
                                         >
                                             {name}
@@ -702,16 +693,28 @@ export default function SiteHeader() {
                         >
                             {navigation.map((item) => {
                                 // Standard mobile links
-                                if (!item.menu) {
+                                if (!item.menu && item.href) {
                                     return (
                                         <Link
                                             key={item.label}
-                                            href={item.href ?? "/"}
+                                            href={item.href}
                                             onClick={closeMenus}
                                             className="flex min-h-14 cursor-pointer items-center border-b border-[#0B253B]/10 text-sm font-semibold transition-colors duration-200 hover:text-slate-500"
                                         >
                                             {item.label}
                                         </Link>
+                                    );
+                                }
+
+                                if (!item.menu) {
+                                    return (
+                                        <span
+                                            key={item.label}
+                                            title={`${item.label} page pending CMS URL`}
+                                            className="flex min-h-14 items-center border-b border-[#0B253B]/10 text-sm font-semibold"
+                                        >
+                                            {item.label}
+                                        </span>
                                     );
                                 }
 
@@ -744,9 +747,7 @@ export default function SiteHeader() {
                                             >
                                                 {/* AESTHETICS */}
                                                 {menu === "aesthetics" && (
-                                                    <MobileAestheticsMenu
-                                                        onNavigate={closeMenus}
-                                                    />
+                                                    <MobileAestheticsMenu />
                                                 )}
 
                                                 {/* LOCATIONS */}
@@ -755,7 +756,7 @@ export default function SiteHeader() {
                                                         {clinicNames.map((name) => (
                                                             <Link
                                                                 key={name}
-                                                                href={`/locations/${toSlug(name)}`}
+                                                                href="#our-locations"
                                                                 onClick={closeMenus}
                                                                 className="block cursor-pointer py-2 text-sm text-[#222222] transition-colors hover:text-[#0B253B] hover:underline"
                                                             >

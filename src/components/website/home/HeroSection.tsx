@@ -202,7 +202,7 @@ export default function HeroSection({
             {/* Heading */}
             <h1
               id="avail-desktop-hero-heading"
-              className="whitespace-pre-line font-serif text-[clamp(2.55rem,5vw,5.25rem)] font-semibold uppercase leading-[1.04] tracking-[-0.025em] text-white"
+              className="whitespace-pre-line font-serif text-[clamp(1.55rem,4vw,2.45rem)] font-semibold uppercase leading-[1.04] tracking-[-0.025em] text-white"
             >
               {content.heading}
             </h1>
