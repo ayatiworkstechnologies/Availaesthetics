@@ -22,6 +22,10 @@ from app.api.public_published_locations import (
 )
 from app.api import public_homepage
 from app.api import admin_homepage
+from app.api import (
+    admin_homepage_categories,
+    public_homepage_categories,
+)
 
 app = FastAPI(
     title="Avail Aesthetics MD API",
@@ -49,3 +53,12 @@ app.include_router(publication_history_router)
 app.include_router(public_published_locations_router)
 app.include_router(public_homepage.router)
 app.include_router(admin_homepage.router)
+app.include_router(
+    admin_homepage_categories.router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    public_homepage_categories.router,
+    prefix="/api/v1",
+)

@@ -4,11 +4,10 @@ import Link from "next/link";
 
 import CardCarousel from "./CardCarousel";
 
-import {
-  categoryCards,
-  allTreatmentsHref,
-  type HomepageImageCard,
-} from "@/lib/cms/homepage-sections-preview";
+import type {
+  HomepageCategoryCard,
+  HomepageCategoriesContent,
+} from "@/lib/cms/public-homepage";
 
 // -------------------------------------
 // Reusable Category Card
@@ -17,7 +16,7 @@ import {
 function CategoryCard({
   card,
 }: {
-  card: HomepageImageCard;
+  card: HomepageCategoryCard;
 }) {
   const cardContent = (
     <div className="group relative aspect-[2/3] w-full overflow-hidden bg-[#E7E1DB]">
@@ -101,7 +100,14 @@ function CategoryCard({
 // Explore by Category Section
 // -------------------------------------
 
-export default function ExploreByCategory() {
+export default function ExploreByCategory({
+  content,
+}: {
+  content: HomepageCategoriesContent;
+}) {
+  const categoryCards = content.cards;
+  const allTreatmentsHref = content.allTreatmentsHref;
+
   if (categoryCards.length === 0) return null;
 
   const hasMoreThanFour = categoryCards.length > 4;
@@ -121,7 +127,6 @@ export default function ExploreByCategory() {
       aria-labelledby="explore-category-title"
       className="bg-white pb-10 pt-10 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14"
     >
-      {/* SAME LG HORIZONTAL PADDING */}
       <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-6 lg:px-28">
 
         {/* SECTION HEADING */}
@@ -151,7 +156,6 @@ export default function ExploreByCategory() {
 
         {/* EXPLORE ALL TREATMENTS CTA */}
         <div className="mt-8 flex justify-center sm:mt-9 lg:mt-10">
-
           {allTreatmentsHref ? (
             <Link
               href={allTreatmentsHref}
@@ -167,7 +171,6 @@ export default function ExploreByCategory() {
               Explore All Treatments
             </span>
           )}
-
         </div>
       </div>
     </section>

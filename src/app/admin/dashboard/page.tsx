@@ -257,19 +257,27 @@ async function DashboardContent() {
               </p>
             </div>
 
-            <Link
-              href="/admin/homepage/hero"
-              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
-            >
-              Manage Homepage Hero
 
-              <span
-                aria-hidden="true"
-                className="ml-2"
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Homepage Hero CMS */}
+              <Link
+                href="/admin/homepage/hero"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#1C1917] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#33302D]"
               >
-                &rarr;
-              </span>
-            </Link>
+                Manage Homepage Hero →
+              </Link>
+
+              {/* Homepage Categories CMS */}
+              <Link
+                href="/admin/homepage/categories"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#356B63] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#28534D]"
+              >
+                Manage Categories →
+              </Link>
+            </div>
+
+
 
           </div>
         </section>

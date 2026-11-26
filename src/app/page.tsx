@@ -5,77 +5,94 @@ import SiteHeader from "@/components/website/layout/SiteHeader";
 import SiteFooter from "@/components/website/layout/SiteFooter";
 
 import HeroSection from "@/components/website/home/HeroSection";
+import ExploreByCategory from "@/components/website/home/ExploreByCategory";
+import SignatureAesthetics from "@/components/website/home/SignatureAesthetics";
+import TestimonialsSection from "@/components/website/home/TestimonialsSection";
+import WhyAvailSection from "@/components/website/home/WhyAvailSection";
+import OurLocationsSection from "@/components/website/home/OurLocationsSection";
+import FaqSection from "@/components/website/home/FaqSection";
+import BlogsSection from "@/components/website/home/BlogsSection";
 
 import {
   getPublicHomepageData,
 } from "@/lib/cms/public-homepage";
 
-
 // =====================================
-// 1. DYNAMIC HOMEPAGE HERO
+// PUBLISHED HOMEPAGE SECTIONS
 // =====================================
 
-async function PublishedHomepageHero() {
-  // Fetch only published CMS content.
-  const { hero } = await getPublicHomepageData();
+async function PublishedHomepageSections() {
+  const { hero, categories } =
+    await getPublicHomepageData();
 
-  // Never expose draft or preview content
-  // when the Hero has not been published.
-  if (!hero) {
-    return null;
-  }
+  return (
+    <>
+      {/* 1. PUBLISHED HOMEPAGE HERO */}
+      {hero && <HeroSection content={hero} />}
 
-  // Reuse the existing approved Hero design.
-  return <HeroSection content={hero} />;
+      {/* 2. PUBLISHED EXPLORE BY CATEGORY */}
+      {categories && (
+        <ExploreByCategory content={categories} />
+      )}
+    </>
+  );
 }
 
-
 // =====================================
-// 2. HERO LOADING FALLBACK
+// LOADING FALLBACK
 // =====================================
 
-function HeroLoadingFallback() {
+function HomepageLoadingFallback() {
   return (
     <section
       role="status"
-      aria-label="Loading homepage banner"
+      aria-label="Loading homepage sections"
       className="min-h-[50vh] animate-pulse bg-[#0B253B]/5"
     >
       <span className="sr-only">
-        Loading homepage banner...
+        Loading homepage...
       </span>
     </section>
   );
 }
 
-
 // =====================================
-// 3. AVAIL AESTHETICS MD HOMEPAGE
+// PUBLIC HOMEPAGE
 // =====================================
 
 export default function HomePage() {
   return (
-    <>
-      {/* Existing website header */}
+    <div className="min-h-screen bg-white">
       <SiteHeader />
 
       <main id="main-content">
 
-        {/* Dynamic published Homepage Hero */}
-        <Suspense fallback={<HeroLoadingFallback />}>
-          <PublishedHomepageHero />
+        {/* DYNAMIC PUBLISHED CMS CONTENT */}
+        <Suspense fallback={<HomepageLoadingFallback />}>
+          <PublishedHomepageSections />
         </Suspense>
 
-        {/*
-          Other approved homepage sections
-          will be restored here using the
-          existing design components.
-        */}
+        {/* 3. SIGNATURE AESTHETICS */}
+        <SignatureAesthetics />
+
+        {/* 4. TESTIMONIALS */}
+        <TestimonialsSection />
+
+        {/* 5. WHY AVAIL AESTHETICS MD */}
+        <WhyAvailSection />
+
+        {/* 6. OUR LOCATIONS */}
+        <OurLocationsSection />
+
+        {/* 7. FAQ */}
+        <FaqSection />
+
+        {/* 8. BLOGS */}
+        <BlogsSection />
 
       </main>
 
-      {/* Existing website footer */}
       <SiteFooter homeHref="/" />
-    </>
+    </div>
   );
 }

@@ -15,24 +15,42 @@ import BlogsSection from "@/components/website/home/BlogsSection";
 
 import { homepageHero } from "@/lib/cms/homepage-preview";
 
+import {
+  categoryCards,
+  allTreatmentsHref,
+} from "@/lib/cms/homepage-sections-preview";
+
+import type {
+  HomepageCategoriesContent,
+} from "@/lib/cms/public-homepage";
+
 export default function HomePreviewPage() {
-  // Development-only preview.
-  // Prevent this route from being publicly accessible
-  // in the production environment.
   if (process.env.NODE_ENV !== "development") {
     notFound();
   }
+
+  // Static design-preview content only.
+  const previewCategories: HomepageCategoriesContent = {
+    cards: categoryCards.map((card) => ({
+      id: String(card.id),
+      title: card.title,
+      imageSrc: card.imageSrc ?? null,
+      imageAlt: card.imageAlt ?? "",
+      href: card.href ?? null,
+    })),
+    allTreatmentsHref: allTreatmentsHref ?? null,
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <SiteHeader />
 
       <main id="main-content">
-        {/* 1. HOMEPAGE HERO */}
+        {/* 1. STATIC PREVIEW HERO */}
         <HeroSection content={homepageHero} />
 
-        {/* 2. EXPLORE BY CATEGORY */}
-        <ExploreByCategory />
+        {/* 2. STATIC PREVIEW CATEGORIES */}
+        <ExploreByCategory content={previewCategories} />
 
         {/* 3. SIGNATURE AESTHETICS */}
         <SignatureAesthetics />
@@ -53,7 +71,6 @@ export default function HomePreviewPage() {
         <BlogsSection />
       </main>
 
-      {/* 9. FOOTER - OUTSIDE MAIN */}
       <SiteFooter homeHref="/dev/home-preview" />
     </div>
   );
