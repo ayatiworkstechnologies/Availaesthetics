@@ -4,10 +4,10 @@ import Link from "next/link";
 
 import CardCarousel from "./CardCarousel";
 
-import {
-  signatureCards,
-  type HomepageImageCard,
-} from "@/lib/cms/homepage-sections-preview";
+import type {
+  HomepageSignatureCard,
+  HomepageSignatureContent,
+} from "@/lib/cms/public-homepage";
 
 // -------------------------------------
 // Reusable Signature Card
@@ -16,7 +16,7 @@ import {
 function SignatureCard({
   card,
 }: {
-  card: HomepageImageCard;
+  card: HomepageSignatureCard;
 }) {
   const cardContent = (
     <div className="group relative aspect-[9/10] w-full overflow-hidden bg-[#D7D9D9]">
@@ -63,7 +63,6 @@ function SignatureCard({
 
       {/* HOVER OUTLINE */}
       <div className="pointer-events-none absolute inset-0 border border-transparent transition-colors duration-300 group-hover:border-white/60" />
-
     </div>
   );
 
@@ -86,7 +85,13 @@ function SignatureCard({
 // Signature Aesthetics Section
 // -------------------------------------
 
-export default function SignatureAesthetics() {
+export default function SignatureAesthetics({
+  content,
+}: {
+  content: HomepageSignatureContent;
+}) {
+  const signatureCards = content.cards;
+
   if (signatureCards.length === 0) return null;
 
   const hasMoreThanFour = signatureCards.length > 4;
@@ -114,12 +119,12 @@ export default function SignatureAesthetics() {
         </h2>
 
         {/*
-          If MORE THAN FOUR:
+          More than four cards:
           Carousel on all screen sizes.
 
-          Four or fewer:
+          Four or fewer cards:
           Mobile/tablet carousel,
-          Desktop four-column grid.
+          desktop four-column grid.
         */}
 
         {hasMoreThanFour ? (
@@ -148,7 +153,6 @@ export default function SignatureAesthetics() {
             </div>
           </>
         )}
-
       </div>
     </section>
   );

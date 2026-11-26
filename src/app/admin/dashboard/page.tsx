@@ -275,6 +275,13 @@ async function DashboardContent() {
               >
                 Manage Categories →
               </Link>
+               {/* Homepage Signature Aesthetics CMS */}
+              <Link
+                href="/admin/homepage/signature"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#356B63] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#28534D]"
+              >
+                Manage Signature Aesthetics →
+              </Link>
             </div>
 
 

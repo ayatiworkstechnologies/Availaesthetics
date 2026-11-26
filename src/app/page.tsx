@@ -18,21 +18,31 @@ import {
 } from "@/lib/cms/public-homepage";
 
 // =====================================
-// PUBLISHED HOMEPAGE SECTIONS
+// PUBLISHED HOMEPAGE CMS SECTIONS
 // =====================================
 
 async function PublishedHomepageSections() {
-  const { hero, categories } =
-    await getPublicHomepageData();
+  const {
+    hero,
+    categories,
+    signature,
+  } = await getPublicHomepageData();
 
   return (
     <>
-      {/* 1. PUBLISHED HOMEPAGE HERO */}
-      {hero && <HeroSection content={hero} />}
+      {/* 1. PUBLISHED HERO */}
+      {hero && (
+        <HeroSection content={hero} />
+      )}
 
       {/* 2. PUBLISHED EXPLORE BY CATEGORY */}
       {categories && (
         <ExploreByCategory content={categories} />
+      )}
+
+      {/* 3. PUBLISHED SIGNATURE AESTHETICS */}
+      {signature && (
+        <SignatureAesthetics content={signature} />
       )}
     </>
   );
@@ -67,13 +77,10 @@ export default function HomePage() {
 
       <main id="main-content">
 
-        {/* DYNAMIC PUBLISHED CMS CONTENT */}
+        {/* DYNAMIC PUBLISHED CMS SECTIONS */}
         <Suspense fallback={<HomepageLoadingFallback />}>
           <PublishedHomepageSections />
         </Suspense>
-
-        {/* 3. SIGNATURE AESTHETICS */}
-        <SignatureAesthetics />
 
         {/* 4. TESTIMONIALS */}
         <TestimonialsSection />

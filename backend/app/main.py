@@ -26,6 +26,10 @@ from app.api import (
     admin_homepage_categories,
     public_homepage_categories,
 )
+from app.api import (
+    admin_homepage_signature,
+    public_homepage_signature,
+)
 
 app = FastAPI(
     title="Avail Aesthetics MD API",
@@ -60,5 +64,18 @@ app.include_router(
 
 app.include_router(
     public_homepage_categories.router,
+    prefix="/api/v1",
+)
+# =====================================
+# SIGNATURE AESTHETICS CMS
+# =====================================
+
+app.include_router(
+    admin_homepage_signature.router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    public_homepage_signature.router,
     prefix="/api/v1",
 )

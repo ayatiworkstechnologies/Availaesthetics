@@ -8,3 +8,4 @@ from .location_operating_hour import LocationOperatingHour
 from .location_publication_event import LocationPublicationEvent
 from app.models.homepage_hero import HomepageHero
 from app.models.homepage_categories import HomepageCategories
+from app.models.homepage_signature import HomepageSignature

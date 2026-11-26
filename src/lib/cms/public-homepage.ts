@@ -6,7 +6,7 @@ import type {
 } from "./homepage-preview";
 
 // =====================================
-// PUBLIC CATEGORY TYPES
+// 1. PUBLIC CATEGORY TYPES
 // =====================================
 
 export type HomepageCategoryCard = {
@@ -22,13 +22,34 @@ export type HomepageCategoriesContent = {
   allTreatmentsHref: string | null;
 };
 
-export type PublicHomepageData = {
-  hero: HomepageHeroContent | null;
-  categories: HomepageCategoriesContent | null;
+// =====================================
+// 2. PUBLIC SIGNATURE TYPES
+// =====================================
+
+export type HomepageSignatureCard = {
+  id: string;
+  title: string;
+  imageSrc: string | null;
+  imageAlt: string;
+  href: string | null;
+};
+
+export type HomepageSignatureContent = {
+  cards: HomepageSignatureCard[];
 };
 
 // =====================================
-// HERO VALIDATION
+// 3. COMPLETE HOMEPAGE DATA TYPE
+// =====================================
+
+export type PublicHomepageData = {
+  hero: HomepageHeroContent | null;
+  categories: HomepageCategoriesContent | null;
+  signature: HomepageSignatureContent | null;
+};
+
+// =====================================
+// 4. HERO VALIDATION
 // =====================================
 
 function isValidHero(
@@ -53,25 +74,104 @@ function isValidHero(
     "eligibilityText",
   ];
 
+  const validRequiredFields = requiredFields.every(
+    (field) =>
+      typeof data[field] === "string" &&
+      (data[field] as string).trim().length > 0
+  );
+
+  const validMobileImage =
+    data.mobileImageSrc == null ||
+    typeof data.mobileImageSrc === "string";
+
+  const validConsultationUrl =
+    data.consultationUrl == null ||
+    typeof data.consultationUrl === "string";
+
   return (
-    requiredFields.every(
-      (field) =>
-        typeof data[field] === "string" &&
-        (data[field] as string).trim().length > 0
+    validRequiredFields &&
+    validMobileImage &&
+    validConsultationUrl
+  );
+}
+
+// =====================================
+// 5. SHARED IMAGE CARD VALIDATION
+// =====================================
+
+function isValidImageCard(
+  value: unknown
+): value is HomepageCategoryCard {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const card = value as Record<string, unknown>;
+
+  return (
+    typeof card.id === "string" &&
+    card.id.trim().length > 0 &&
+    typeof card.title === "string" &&
+    card.title.trim().length > 0 &&
+    typeof card.imageAlt === "string" &&
+    (
+      card.imageSrc === null ||
+      typeof card.imageSrc === "string"
     ) &&
     (
-      data.mobileImageSrc == null ||
-      typeof data.mobileImageSrc === "string"
-    ) &&
-    (
-      data.consultationUrl == null ||
-      typeof data.consultationUrl === "string"
+      card.href === null ||
+      typeof card.href === "string"
     )
   );
 }
 
 // =====================================
-// CATEGORIES VALIDATION
+// 6. SHARED CARD ARRAY VALIDATION
+// =====================================
+
+function isValidCardsArray(
+  value: unknown
+): value is HomepageCategoryCard[] {
+  if (
+    !Array.isArray(value) ||
+    value.length > 20
+  ) {
+    return false;
+  }
+
+  const ids = new Set<string>();
+
+  for (const card of value) {
+    if (!isValidImageCard(card)) {
+      return false;
+    }
+
+    // Prevent duplicate IDs.
+    if (ids.has(card.id)) {
+      return false;
+    }
+
+    // Image alt text is required when
+    // an image is configured.
+    if (
+      card.imageSrc &&
+      !card.imageAlt.trim()
+    ) {
+      return false;
+    }
+
+    ids.add(card.id);
+  }
+
+  return true;
+}
+
+// =====================================
+// 7. CATEGORIES VALIDATION
 // =====================================
 
 function isValidCategories(
@@ -87,60 +187,37 @@ function isValidCategories(
 
   const data = value as Record<string, unknown>;
 
-  if (!Array.isArray(data.cards)) {
-    return false;
-  }
+  return (
+    isValidCardsArray(data.cards) &&
+    (
+      data.allTreatmentsHref === null ||
+      typeof data.allTreatmentsHref === "string"
+    )
+  );
+}
 
+// =====================================
+// 8. SIGNATURE VALIDATION
+// =====================================
+
+function isValidSignature(
+  value: unknown
+): value is HomepageSignatureContent {
   if (
-    data.allTreatmentsHref !== null &&
-    typeof data.allTreatmentsHref !== "string"
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
   ) {
     return false;
   }
 
-  const ids = new Set<string>();
+  const data = value as Record<string, unknown>;
 
-  for (const item of data.cards) {
-    if (
-      !item ||
-      typeof item !== "object" ||
-      Array.isArray(item)
-    ) {
-      return false;
-    }
-
-    const card = item as Record<string, unknown>;
-
-    if (
-      typeof card.id !== "string" ||
-      !card.id.trim() ||
-      typeof card.title !== "string" ||
-      !card.title.trim() ||
-      typeof card.imageAlt !== "string" ||
-      !(
-        card.imageSrc === null ||
-        typeof card.imageSrc === "string"
-      ) ||
-      !(
-        card.href === null ||
-        typeof card.href === "string"
-      )
-    ) {
-      return false;
-    }
-
-    if (ids.has(card.id)) {
-      return false;
-    }
-
-    ids.add(card.id);
-  }
-
-  return true;
+  return isValidCardsArray(data.cards);
 }
 
 // =====================================
-// SHARED PUBLISHED API FETCH
+// 9. SHARED PUBLISHED API FETCH
 // =====================================
 
 async function fetchPublishedContent(
@@ -149,7 +226,9 @@ async function fetchPublishedContent(
   const apiUrl = process.env.API_BASE_URL;
 
   if (!apiUrl) {
-    throw new Error("API_BASE_URL is not configured");
+    throw new Error(
+      "API_BASE_URL is not configured"
+    );
   }
 
   const response = await fetch(
@@ -163,16 +242,16 @@ async function fetchPublishedContent(
     }
   );
 
-  // Not yet published.
+  // The section has not been published.
+  // Do not display draft or preview data.
   if (response.status === 404) {
     return null;
   }
 
-  // Backend failures must not be mistaken
-  // for unpublished content.
+  // Backend errors must remain visible.
   if (!response.ok) {
     throw new Error(
-      `Public CMS request failed: ${path} (${response.status})`
+      `Public CMS request failed: ${path} (HTTP ${response.status})`
     );
   }
 
@@ -180,34 +259,76 @@ async function fetchPublishedContent(
 }
 
 // =====================================
-// GET PUBLISHED HOMEPAGE DATA
+// 10. GET COMPLETE PUBLISHED HOMEPAGE
 // =====================================
 
 export async function getPublicHomepageData():
   Promise<PublicHomepageData> {
 
-  const [heroData, categoriesData] = await Promise.all([
+  // Fetch all published CMS sections
+  // concurrently for better performance.
+  const [
+    heroData,
+    categoriesData,
+    signatureData,
+  ] = await Promise.all([
     fetchPublishedContent(
       "/api/v1/public/homepage/hero"
     ),
     fetchPublishedContent(
       "/api/v1/public/homepage/categories"
     ),
+    fetchPublishedContent(
+      "/api/v1/public/homepage/signature"
+    ),
   ]);
 
-  if (heroData !== null && !isValidHero(heroData)) {
-    throw new Error("Invalid published Hero content");
+  // ---------------------------------
+  // Validate Homepage Hero
+  // ---------------------------------
+
+  if (
+    heroData !== null &&
+    !isValidHero(heroData)
+  ) {
+    throw new Error(
+      "Invalid published Homepage Hero content"
+    );
   }
+
+  // ---------------------------------
+  // Validate Explore by Category
+  // ---------------------------------
 
   if (
     categoriesData !== null &&
     !isValidCategories(categoriesData)
   ) {
-    throw new Error("Invalid published Categories content");
+    throw new Error(
+      "Invalid published Categories content"
+    );
   }
+
+  // ---------------------------------
+  // Validate Signature Aesthetics
+  // ---------------------------------
+
+  if (
+    signatureData !== null &&
+    !isValidSignature(signatureData)
+  ) {
+    throw new Error(
+      "Invalid published Signature Aesthetics content"
+    );
+  }
+
+  // ---------------------------------
+  // Return published content only
+  // ---------------------------------
 
   return {
     hero: heroData,
     categories: categoriesData,
+    signature: signatureData,
   };
 }
