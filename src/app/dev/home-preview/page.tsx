@@ -1,3 +1,4 @@
+
 import { notFound } from "next/navigation";
 
 import SiteHeader from "@/components/website/layout/SiteHeader";
@@ -12,7 +13,9 @@ import OurLocationsSection from "@/components/website/home/OurLocationsSection";
 import FaqSection from "@/components/website/home/FaqSection";
 import BlogsSection from "@/components/website/home/BlogsSection";
 
-import { homepageHero } from "@/lib/cms/homepage-preview";
+import {
+  homepageHero,
+} from "@/lib/cms/homepage-preview";
 
 import {
   categoryCards,
@@ -83,6 +86,7 @@ const previewTestimonials: HomepageTestimonialsContent = {
 // =====================================
 
 export default function HomePreviewPage() {
+  // Never expose this preview in production.
   if (process.env.NODE_ENV !== "development") {
     notFound();
   }
@@ -92,17 +96,24 @@ export default function HomePreviewPage() {
       <SiteHeader />
 
       <main id="main-content">
+
         {/* 1. STATIC HOMEPAGE HERO */}
         <HeroSection content={homepageHero} />
 
         {/* 2. STATIC EXPLORE BY CATEGORY */}
-        <ExploreByCategory content={previewCategories} />
+        <ExploreByCategory
+          content={previewCategories}
+        />
 
         {/* 3. STATIC SIGNATURE AESTHETICS */}
-        <SignatureAesthetics content={previewSignature} />
+        <SignatureAesthetics
+          content={previewSignature}
+        />
 
         {/* 4. STATIC TESTIMONIALS */}
-        <TestimonialsSection content={previewTestimonials} />
+        <TestimonialsSection
+          content={previewTestimonials}
+        />
 
         {/* 5. STATIC WHY AVAIL */}
         <WhyAvailSection />
@@ -110,14 +121,17 @@ export default function HomePreviewPage() {
         {/* 6. STATIC OUR LOCATIONS */}
         <OurLocationsSection />
 
-        {/* 7. FAQ */}
+        {/* 7. STATIC FAQ */}
         <FaqSection />
 
-        {/* 8. BLOGS */}
+        {/* 8. STATIC BLOGS */}
         <BlogsSection />
+
       </main>
 
-      <SiteFooter homeHref="/dev/home-preview" />
+      <SiteFooter
+        homeHref="/dev/home-preview"
+      />
     </div>
   );
 }

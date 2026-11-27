@@ -14,3 +14,4 @@ from app.models.homepage_why_avail import HomepageWhyAvail
 from app.models.homepage_locations_settings import (
     HomepageLocationsSettings,
 )
+from app.models.homepage_faq import HomepageFaq

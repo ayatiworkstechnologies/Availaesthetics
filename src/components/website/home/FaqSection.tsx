@@ -5,11 +5,28 @@ import { useState } from "react";
 
 import {
   homepageFaqs,
+  type HomepageFaq,
 } from "@/lib/cms/homepage-faq-preview";
 
-// -----------------------------------------
-// Animated Plus / Close Icon
-// -----------------------------------------
+// =====================================
+// DEFAULT PREVIEW CONTENT
+// =====================================
+
+const DEFAULT_HEADING =
+  "Frequently Asked Questions";
+
+// =====================================
+// DYNAMIC FAQ PROPS
+// =====================================
+
+export type FaqSectionProps = {
+  heading?: string;
+  faqs?: HomepageFaq[];
+};
+
+// =====================================
+// ANIMATED PLUS / CLOSE ICON
+// =====================================
 
 function AccordionIcon({
   isOpen,
@@ -39,23 +56,41 @@ function AccordionIcon({
   );
 }
 
-// -----------------------------------------
-// Frequently Asked Questions
-// -----------------------------------------
+// =====================================
+// FREQUENTLY ASKED QUESTIONS
+// =====================================
 
-export default function FaqSection() {
-  // First question is open by default.
-  const [openFaqId, setOpenFaqId] = useState<
-    string | null
-  >(homepageFaqs[0]?.id ?? null);
+export default function FaqSection({
+  heading = DEFAULT_HEADING,
+  faqs = homepageFaqs,
+}: FaqSectionProps) {
+  // The first FAQ opens by default.
+  // When CMS props change, the component
+  // falls back to the new first question.
+
+  const [openFaqId, setOpenFaqId] =
+    useState<string | null>(
+      faqs[0]?.id ?? null
+    );
+
+  const activeFaqId =
+    openFaqId === null
+      ? null
+      : faqs.some(
+          (faq) => faq.id === openFaqId
+        )
+        ? openFaqId
+        : (faqs[0]?.id ?? null);
 
   function toggleFaq(id: string) {
-    setOpenFaqId((current) =>
-      current === id ? null : id
+    setOpenFaqId(
+      activeFaqId === id ? null : id
     );
   }
 
-  if (homepageFaqs.length === 0) {
+  // No FAQ cards:
+  // Hide the section completely.
+  if (faqs.length === 0) {
     return null;
   }
 
@@ -73,7 +108,7 @@ export default function FaqSection() {
       {/* MAIN CONTAINER */}
       <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-6 lg:px-28">
 
-        {/* SECTION HEADING */}
+        {/* DYNAMIC SECTION HEADING */}
         <h2
           id="faq-heading"
           className="
@@ -88,14 +123,14 @@ export default function FaqSection() {
             lg:mb-14
           "
         >
-          Frequently Asked Questions
+          {heading}
         </h2>
 
         {/* FAQ LIST */}
         <div className="w-full">
-
-          {homepageFaqs.map((faq, index) => {
-            const isOpen = openFaqId === faq.id;
+          {faqs.map((faq, index) => {
+            const isOpen =
+              activeFaqId === faq.id;
 
             const questionId =
               `faq-question-${faq.id}`;
@@ -111,7 +146,6 @@ export default function FaqSection() {
                   first:border-t-0
                 "
               >
-
                 {/* QUESTION BUTTON */}
                 <h3 className="m-0">
                   <button
@@ -119,7 +153,9 @@ export default function FaqSection() {
                     type="button"
                     aria-expanded={isOpen}
                     aria-controls={answerId}
-                    onClick={() => toggleFaq(faq.id)}
+                    onClick={() =>
+                      toggleFaq(faq.id)
+                    }
                     className={`
                       group
                       flex w-full
@@ -189,9 +225,10 @@ export default function FaqSection() {
                         sm:h-9 sm:w-9
                       "
                     >
-                      <AccordionIcon isOpen={isOpen} />
+                      <AccordionIcon
+                        isOpen={isOpen}
+                      />
                     </span>
-
                   </button>
                 </h3>
 
@@ -215,7 +252,6 @@ export default function FaqSection() {
                   `}
                 >
                   <div className="min-h-0 overflow-hidden">
-
                     {/* ANSWER CONTENT */}
                     <div
                       className="
@@ -253,14 +289,11 @@ export default function FaqSection() {
                         </p>
                       )}
                     </div>
-
                   </div>
                 </div>
-
               </div>
             );
           })}
-
         </div>
       </div>
     </section>

@@ -289,12 +289,19 @@ async function DashboardContent() {
               >
                 Manage Why Avail →
               </Link>
-               {/* Homepage Location CMS */}
+              {/* Homepage Location CMS */}
               <Link
                 href="/admin/homepage/locations"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#356B63] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#28534D]"
               >
                 Manage Our Locations →
+              </Link>
+              {/* Homepage Location CMS */}
+              <Link
+                href="/admin/homepage/faq"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#356B63] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#28534D]"
+              >
+                Manage Homepage FAQs
               </Link>
             </div>
 

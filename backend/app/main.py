@@ -40,6 +40,10 @@ from app.api import (
 )
 from app.api import admin_homepage_locations
 from app.api import public_homepage_locations
+from app.api import (
+    admin_homepage_faq,
+    public_homepage_faq,
+)
 
 app = FastAPI(
     title="Avail Aesthetics MD API",
@@ -130,5 +134,18 @@ app.include_router(
 
 app.include_router(
     public_homepage_locations.router,
+    prefix="/api/v1",
+)
+# =====================================
+# HOMEPAGE FAQ CMS ROUTES
+# =====================================
+
+app.include_router(
+    admin_homepage_faq.router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    public_homepage_faq.router,
     prefix="/api/v1",
 )

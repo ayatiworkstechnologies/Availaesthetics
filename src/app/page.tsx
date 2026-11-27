@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 
 import SiteHeader from "@/components/website/layout/SiteHeader";
@@ -28,21 +29,28 @@ async function PublishedHomepageSections() {
     testimonials,
     whyAvail,
     locations,
+    faq,
   } = await getPublicHomepageData();
 
   return (
     <>
       {/* 1. PUBLISHED HERO */}
-      {hero && <HeroSection content={hero} />}
+      {hero && (
+        <HeroSection content={hero} />
+      )}
 
       {/* 2. PUBLISHED EXPLORE BY CATEGORY */}
       {categories && (
-        <ExploreByCategory content={categories} />
+        <ExploreByCategory
+          content={categories}
+        />
       )}
 
       {/* 3. PUBLISHED SIGNATURE AESTHETICS */}
       {signature && (
-        <SignatureAesthetics content={signature} />
+        <SignatureAesthetics
+          content={signature}
+        />
       )}
 
       {/* 4. PUBLISHED TESTIMONIALS */}
@@ -57,19 +65,30 @@ async function PublishedHomepageSections() {
       {whyAvail && (
         <WhyAvailSection
           content={whyAvail}
-          consultationUrl={hero?.consultationUrl ?? null}
+          consultationUrl={
+            hero?.consultationUrl ?? null
+          }
         />
       )}
 
       {/* 6. PUBLISHED OUR LOCATIONS */}
-      {locations && locations.locations.length > 0 && (
-        <OurLocationsSection
-          heading={locations.heading}
-          description={locations.description}
-          locations={locations.locations}
-          defaultSelectedLocationId={
-            locations.defaultSelectedLocationId
-          }
+      {locations &&
+        locations.locations.length > 0 && (
+          <OurLocationsSection
+            heading={locations.heading}
+            description={locations.description}
+            locations={locations.locations}
+            defaultSelectedLocationId={
+              locations.defaultSelectedLocationId
+            }
+          />
+        )}
+
+      {/* 7. PUBLISHED FAQ */}
+      {faq && faq.faqs.length > 0 && (
+        <FaqSection
+          heading={faq.heading}
+          faqs={faq.faqs}
         />
       )}
     </>
@@ -104,15 +123,14 @@ export default function HomePage() {
       <SiteHeader />
 
       <main id="main-content">
-        {/* 1–6. PUBLISHED CMS SECTIONS */}
-        <Suspense fallback={<HomepageLoadingFallback />}>
+        {/* 1–7. DYNAMIC PUBLISHED CMS SECTIONS */}
+        <Suspense
+          fallback={<HomepageLoadingFallback />}
+        >
           <PublishedHomepageSections />
         </Suspense>
 
-        {/* 7. FAQ */}
-        <FaqSection />
-
-        {/* 8. BLOGS */}
+        {/* 8. STATIC BLOGS */}
         <BlogsSection />
       </main>
 

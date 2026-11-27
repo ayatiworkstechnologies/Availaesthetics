@@ -1,3 +1,4 @@
+
 import "server-only";
 
 import type {
@@ -7,6 +8,10 @@ import type {
 import type {
   HomepageLocation,
 } from "./homepage-locations-preview";
+
+import type {
+  HomepageFaq,
+} from "./homepage-faq-preview";
 
 // =====================================
 // PUBLIC CATEGORY TYPES
@@ -92,6 +97,15 @@ export type PublishedHomepageLocations = {
 };
 
 // =====================================
+// PUBLIC FAQ TYPE
+// =====================================
+
+export type HomepageFaqContent = {
+  heading: string;
+  faqs: HomepageFaq[];
+};
+
+// =====================================
 // COMPLETE HOMEPAGE CMS DATA
 // =====================================
 
@@ -102,7 +116,22 @@ export type PublicHomepageData = {
   testimonials: HomepageTestimonialsContent | null;
   whyAvail: HomepageWhyAvailContent | null;
   locations: PublishedHomepageLocations | null;
+  faq: HomepageFaqContent | null;
 };
+
+// =====================================
+// SHARED RECORD VALIDATION
+// =====================================
+
+function isRecord(
+  value: unknown
+): value is Record<string, unknown> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  );
+}
 
 // =====================================
 // HERO VALIDATION
@@ -111,15 +140,9 @@ export type PublicHomepageData = {
 function isValidHero(
   value: unknown
 ): value is HomepageHeroContent {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
-
-  const data = value as Record<string, unknown>;
 
   const requiredFields = [
     "heading",
@@ -133,16 +156,16 @@ function isValidHero(
   return (
     requiredFields.every(
       (field) =>
-        typeof data[field] === "string" &&
-        (data[field] as string).trim().length > 0
+        typeof value[field] === "string" &&
+        (value[field] as string).trim().length > 0
     ) &&
     (
-      data.mobileImageSrc == null ||
-      typeof data.mobileImageSrc === "string"
+      value.mobileImageSrc == null ||
+      typeof value.mobileImageSrc === "string"
     ) &&
     (
-      data.consultationUrl == null ||
-      typeof data.consultationUrl === "string"
+      value.consultationUrl == null ||
+      typeof value.consultationUrl === "string"
     )
   );
 }
@@ -154,29 +177,23 @@ function isValidHero(
 function isValidImageCard(
   value: unknown
 ): value is HomepageCategoryCard {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const card = value as Record<string, unknown>;
-
   return (
-    typeof card.id === "string" &&
-    card.id.trim().length > 0 &&
-    typeof card.title === "string" &&
-    card.title.trim().length > 0 &&
-    typeof card.imageAlt === "string" &&
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    typeof value.imageAlt === "string" &&
     (
-      card.imageSrc === null ||
-      typeof card.imageSrc === "string"
+      value.imageSrc === null ||
+      typeof value.imageSrc === "string"
     ) &&
     (
-      card.href === null ||
-      typeof card.href === "string"
+      value.href === null ||
+      typeof value.href === "string"
     )
   );
 }
@@ -219,24 +236,18 @@ function isValidCardsArray(
 function isValidCategories(
   value: unknown
 ): value is HomepageCategoriesContent {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const data = value as Record<string, unknown>;
-
   return (
-    typeof data.heading === "string" &&
-    data.heading.trim().length > 0 &&
-    data.heading.length <= 200 &&
-    isValidCardsArray(data.cards) &&
+    typeof value.heading === "string" &&
+    value.heading.trim().length > 0 &&
+    value.heading.length <= 200 &&
+    isValidCardsArray(value.cards) &&
     (
-      data.allTreatmentsHref === null ||
-      typeof data.allTreatmentsHref === "string"
+      value.allTreatmentsHref === null ||
+      typeof value.allTreatmentsHref === "string"
     )
   );
 }
@@ -248,21 +259,15 @@ function isValidCategories(
 function isValidSignature(
   value: unknown
 ): value is HomepageSignatureContent {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const data = value as Record<string, unknown>;
-
   return (
-    typeof data.heading === "string" &&
-    data.heading.trim().length > 0 &&
-    data.heading.length <= 200 &&
-    isValidCardsArray(data.cards)
+    typeof value.heading === "string" &&
+    value.heading.trim().length > 0 &&
+    value.heading.length <= 200 &&
+    isValidCardsArray(value.cards)
   );
 }
 
@@ -275,9 +280,7 @@ function withLegacyHeading(
   defaultHeading: string
 ): unknown {
   if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value) ||
+    !isRecord(value) ||
     Object.prototype.hasOwnProperty.call(
       value,
       "heading"
@@ -287,7 +290,7 @@ function withLegacyHeading(
   }
 
   return {
-    ...(value as Record<string, unknown>),
+    ...value,
     heading: defaultHeading,
   };
 }
@@ -299,66 +302,53 @@ function withLegacyHeading(
 function isValidTestimonials(
   value: unknown
 ): value is HomepageTestimonialsContent {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const data = value as Record<string, unknown>;
-
   if (
-    typeof data.heading !== "string" ||
-    !data.heading.trim() ||
-    data.heading.length > 200 ||
-    !Array.isArray(data.testimonials) ||
-    data.testimonials.length > 30
+    typeof value.heading !== "string" ||
+    !value.heading.trim() ||
+    value.heading.length > 200 ||
+    !Array.isArray(value.testimonials) ||
+    value.testimonials.length > 30
   ) {
     return false;
   }
 
   const ids = new Set<string>();
 
-  for (const item of data.testimonials) {
+  for (const item of value.testimonials) {
+    if (!isRecord(item)) {
+      return false;
+    }
+
     if (
-      !item ||
-      typeof item !== "object" ||
-      Array.isArray(item)
+      typeof item.id !== "string" ||
+      !item.id.trim() ||
+      item.id.length > 100 ||
+      typeof item.quote !== "string" ||
+      !item.quote.trim() ||
+      item.quote.length > 2000 ||
+      typeof item.author !== "string" ||
+      !item.author.trim() ||
+      item.author.length > 150
     ) {
       return false;
     }
 
-    const testimonial =
-      item as Record<string, unknown>;
-
-    if (
-      typeof testimonial.id !== "string" ||
-      !testimonial.id.trim() ||
-      testimonial.id.length > 100 ||
-      typeof testimonial.quote !== "string" ||
-      !testimonial.quote.trim() ||
-      testimonial.quote.length > 2000 ||
-      typeof testimonial.author !== "string" ||
-      !testimonial.author.trim() ||
-      testimonial.author.length > 150
-    ) {
+    if (ids.has(item.id)) {
       return false;
     }
 
-    if (ids.has(testimonial.id)) {
-      return false;
-    }
-
-    ids.add(testimonial.id);
+    ids.add(item.id);
   }
 
   return true;
 }
 
 // =====================================
-// WHY AVAIL IMAGE VALIDATION
+// WHY AVAIL IMAGE PATH VALIDATION
 // =====================================
 
 function isValidWhyAvailImagePath(
@@ -391,32 +381,26 @@ function isValidWhyAvailImagePath(
 function isValidWhyAvailFeature(
   value: unknown
 ): value is HomepageWhyAvailFeature {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const item = value as Record<string, unknown>;
-
   return (
-    typeof item.id === "string" &&
-    item.id.trim().length > 0 &&
-    item.id.length <= 100 &&
-    typeof item.label === "string" &&
-    item.label.trim().length > 0 &&
-    item.label.length <= 200 &&
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    value.id.length <= 100 &&
+    typeof value.label === "string" &&
+    value.label.trim().length > 0 &&
+    value.label.length <= 200 &&
     (
-      item.avail === true ||
-      item.avail === false ||
-      item.avail === null
+      value.avail === true ||
+      value.avail === false ||
+      value.avail === null
     ) &&
     (
-      item.others === true ||
-      item.others === false ||
-      item.others === null
+      value.others === true ||
+      value.others === false ||
+      value.others === null
     )
   );
 }
@@ -428,52 +412,46 @@ function isValidWhyAvailFeature(
 function isValidWhyAvail(
   value: unknown
 ): value is HomepageWhyAvailContent {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const data = value as Record<string, unknown>;
-
   if (
-    typeof data.heading !== "string" ||
-    !data.heading.trim() ||
-    data.heading.length > 200 ||
+    typeof value.heading !== "string" ||
+    !value.heading.trim() ||
+    value.heading.length > 200 ||
 
-    !isValidWhyAvailImagePath(data.imageSrc) ||
-    typeof data.imageAlt !== "string" ||
-    data.imageAlt.length > 250 ||
+    !isValidWhyAvailImagePath(value.imageSrc) ||
+    typeof value.imageAlt !== "string" ||
+    value.imageAlt.length > 250 ||
 
-    !isValidWhyAvailImagePath(data.logoSrc) ||
-    typeof data.logoAlt !== "string" ||
-    data.logoAlt.length > 250 ||
+    !isValidWhyAvailImagePath(value.logoSrc) ||
+    typeof value.logoAlt !== "string" ||
+    value.logoAlt.length > 250 ||
 
-    typeof data.othersHeading !== "string" ||
-    !data.othersHeading.trim() ||
-    data.othersHeading.length > 100 ||
+    typeof value.othersHeading !== "string" ||
+    !value.othersHeading.trim() ||
+    value.othersHeading.length > 100 ||
 
-    typeof data.consultationLabel !== "string" ||
-    !data.consultationLabel.trim() ||
-    data.consultationLabel.length > 150 ||
+    typeof value.consultationLabel !== "string" ||
+    !value.consultationLabel.trim() ||
+    value.consultationLabel.length > 150 ||
 
-    !Array.isArray(data.features) ||
-    data.features.length < 1 ||
-    data.features.length > 5
+    !Array.isArray(value.features) ||
+    value.features.length < 1 ||
+    value.features.length > 5
   ) {
     return false;
   }
 
   if (
     (
-      data.imageSrc !== null &&
-      !data.imageAlt.trim()
+      value.imageSrc !== null &&
+      !value.imageAlt.trim()
     ) ||
     (
-      data.logoSrc !== null &&
-      !data.logoAlt.trim()
+      value.logoSrc !== null &&
+      !value.logoAlt.trim()
     )
   ) {
     return false;
@@ -481,7 +459,7 @@ function isValidWhyAvail(
 
   const ids = new Set<string>();
 
-  for (const feature of data.features) {
+  for (const feature of value.features) {
     if (!isValidWhyAvailFeature(feature)) {
       return false;
     }
@@ -497,47 +475,38 @@ function isValidWhyAvail(
 }
 
 // =====================================
-// PUBLISHED HOMEPAGE LOCATION VALIDATION
+// GOOGLE MAPS URL VALIDATION
 // =====================================
-
-type PublicHomepageLocationsResponse = {
-  heading: string;
-  description: string;
-  defaultSelectedLocationId: string | null;
-  locations: HomepageLocation[];
-};
-
-function isRecord(
-  value: unknown
-): value is Record<string, unknown> {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    !Array.isArray(value)
-  );
-}
 
 function validGoogleMapsUrl(
   value: string,
   embedOnly = false
 ): string | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
 
   try {
     const url = new URL(value);
     const hostname = url.hostname.toLowerCase();
+
     const isGoogleHost =
       hostname === "google.com" ||
       hostname.endsWith(".google.com");
+
     const isMapsShortLink =
       hostname === "maps.app.goo.gl";
 
     if (
       url.protocol !== "https:" ||
       (!isGoogleHost && !isMapsShortLink) ||
-      (embedOnly &&
-        (!isGoogleHost ||
-          !url.pathname.startsWith("/maps/embed")))
+      (
+        embedOnly &&
+        (
+          !isGoogleHost ||
+          !url.pathname.startsWith("/maps/embed")
+        )
+      )
     ) {
       return null;
     }
@@ -547,6 +516,10 @@ function validGoogleMapsUrl(
     return null;
   }
 }
+
+// =====================================
+// HOMEPAGE LOCATION VALIDATION
+// =====================================
 
 function isHomepageLocation(
   value: unknown
@@ -571,16 +544,37 @@ function isHomepageLocation(
     typeof value.postalCode === "string" &&
     typeof value.country === "string" &&
     Boolean(value.country.trim()) &&
-    (value.phone === null || typeof value.phone === "string") &&
-    (value.phoneHref === null ||
-      (typeof value.phoneHref === "string" &&
-        value.phoneHref.startsWith("tel:"))) &&
+    (
+      value.phone === null ||
+      typeof value.phone === "string"
+    ) &&
+    (
+      value.phoneHref === null ||
+      (
+        typeof value.phoneHref === "string" &&
+        value.phoneHref.startsWith("tel:")
+      )
+    ) &&
     typeof value.mapsUrl === "string" &&
     validGoogleMapsUrl(value.mapsUrl) !== null &&
     typeof value.mapEmbedUrl === "string" &&
-    validGoogleMapsUrl(value.mapEmbedUrl, true) !== null
+    validGoogleMapsUrl(
+      value.mapEmbedUrl,
+      true
+    ) !== null
   );
 }
+
+// =====================================
+// PUBLISHED LOCATIONS RESPONSE
+// =====================================
+
+type PublicHomepageLocationsResponse = {
+  heading: string;
+  description: string;
+  defaultSelectedLocationId: string | null;
+  locations: HomepageLocation[];
+};
 
 // =====================================
 // VALIDATE PUBLISHED LOCATIONS RESPONSE
@@ -606,7 +600,9 @@ function normalizePublishedLocations(
       value.defaultSelectedLocationId === null ||
       (
         typeof value.defaultSelectedLocationId === "string" &&
-        Boolean(value.defaultSelectedLocationId.trim())
+        Boolean(
+          value.defaultSelectedLocationId.trim()
+        )
       )
     )
   ) {
@@ -619,14 +615,19 @@ function normalizePublishedLocations(
     value as unknown as PublicHomepageLocationsResponse;
 
   const ids = new Set<string>();
+
   for (const location of response.locations) {
     if (ids.has(location.id)) {
-      throw new Error("Duplicate published Homepage Location ID");
+      throw new Error(
+        "Duplicate published Homepage Location ID"
+      );
     }
+
     ids.add(location.id);
   }
 
-  const preferred = response.defaultSelectedLocationId;
+  const preferred =
+    response.defaultSelectedLocationId;
 
   return {
     heading: response.heading,
@@ -635,11 +636,83 @@ function normalizePublishedLocations(
     defaultSelectedLocationId:
       preferred &&
       response.locations.some(
-        (clinic) => clinic.id === preferred
+        (location) => location.id === preferred
       )
         ? preferred
         : (response.locations[0]?.id ?? null),
   };
+}
+
+// =====================================
+// FAQ ITEM VALIDATION
+// =====================================
+
+function isValidFaqItem(
+  value: unknown
+): value is HomepageFaq {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    value.id.length >= 1 &&
+    value.id.length <= 100 &&
+    /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(
+      value.id
+    ) &&
+
+    typeof value.question === "string" &&
+    value.question.trim().length >= 1 &&
+    value.question.length <= 500 &&
+
+    (
+      value.answer === null ||
+      (
+        typeof value.answer === "string" &&
+        value.answer.length <= 5000
+      )
+    )
+  );
+}
+
+// =====================================
+// FAQ CONTENT VALIDATION
+// =====================================
+
+function isValidFaqContent(
+  value: unknown
+): value is HomepageFaqContent {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  if (
+    typeof value.heading !== "string" ||
+    !value.heading.trim() ||
+    value.heading.length > 200 ||
+    !Array.isArray(value.faqs) ||
+    value.faqs.length < 1 ||
+    value.faqs.length > 30
+  ) {
+    return false;
+  }
+
+  const ids = new Set<string>();
+
+  for (const faq of value.faqs) {
+    if (!isValidFaqItem(faq)) {
+      return false;
+    }
+
+    if (ids.has(faq.id)) {
+      return false;
+    }
+
+    ids.add(faq.id);
+  }
+
+  return true;
 }
 
 // =====================================
@@ -668,8 +741,8 @@ async function fetchPublishedContent(
     }
   );
 
-  // A 404 means the section is
-  // not published yet.
+  // 404 means the section has
+  // not been published yet.
   if (response.status === 404) {
     return null;
   }
@@ -696,6 +769,7 @@ export async function getPublicHomepageData():
     testimonialsData,
     whyAvailData,
     locationsData,
+    faqData,
   ] = await Promise.all([
     fetchPublishedContent(
       "/api/v1/public/homepage/hero"
@@ -715,7 +789,14 @@ export async function getPublicHomepageData():
     fetchPublishedContent(
       "/api/v1/public/homepage/locations"
     ),
+    fetchPublishedContent(
+      "/api/v1/public/homepage/faq"
+    ),
   ]);
+
+  // ---------------------------------
+  // NORMALIZE LEGACY SECTION HEADINGS
+  // ---------------------------------
 
   const normalizedCategoriesData =
     withLegacyHeading(
@@ -748,7 +829,9 @@ export async function getPublicHomepageData():
 
   if (
     normalizedCategoriesData !== null &&
-    !isValidCategories(normalizedCategoriesData)
+    !isValidCategories(
+      normalizedCategoriesData
+    )
   ) {
     throw new Error(
       "Invalid published Categories content"
@@ -761,7 +844,9 @@ export async function getPublicHomepageData():
 
   if (
     normalizedSignatureData !== null &&
-    !isValidSignature(normalizedSignatureData)
+    !isValidSignature(
+      normalizedSignatureData
+    )
   ) {
     throw new Error(
       "Invalid published Signature content"
@@ -774,7 +859,9 @@ export async function getPublicHomepageData():
 
   if (
     testimonialsData !== null &&
-    !isValidTestimonials(testimonialsData)
+    !isValidTestimonials(
+      testimonialsData
+    )
   ) {
     throw new Error(
       "Invalid published Testimonials content"
@@ -787,7 +874,9 @@ export async function getPublicHomepageData():
 
   if (
     whyAvailData !== null &&
-    !isValidWhyAvail(whyAvailData)
+    !isValidWhyAvail(
+      whyAvailData
+    )
   ) {
     throw new Error(
       "Invalid published Why Avail content"
@@ -795,7 +884,20 @@ export async function getPublicHomepageData():
   }
 
   // ---------------------------------
-  // RETURN COMPLETE HOMEPAGE
+  // VALIDATE FAQ
+  // ---------------------------------
+
+  if (
+    faqData !== null &&
+    !isValidFaqContent(faqData)
+  ) {
+    throw new Error(
+      "Invalid published Homepage FAQ content"
+    );
+  }
+
+  // ---------------------------------
+  // RETURN ALL HOMEPAGE CMS SECTIONS
   // ---------------------------------
 
   return {
@@ -807,5 +909,6 @@ export async function getPublicHomepageData():
     locations: normalizePublishedLocations(
       locationsData
     ),
+    faq: faqData,
   };
 }
