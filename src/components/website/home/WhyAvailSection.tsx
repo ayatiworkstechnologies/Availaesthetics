@@ -1,6 +1,10 @@
 
 import Image from "next/image";
 
+import type {
+  HomepageWhyAvailContent,
+} from "@/lib/cms/public-homepage";
+
 import {
   whyAvailArtworkSrc,
   whyAvailFeatures,
@@ -9,6 +13,15 @@ import {
 import {
   homepageHero,
 } from "@/lib/cms/homepage-preview";
+
+// -----------------------------------
+// COMPONENT PROPS
+// -----------------------------------
+
+type WhyAvailSectionProps = {
+  content?: HomepageWhyAvailContent;
+  consultationUrl?: string | null;
+};
 
 // -----------------------------------
 // SVG Icons
@@ -95,10 +108,95 @@ function FeatureStatus({
 // Why Avail Aesthetics MD
 // -----------------------------------
 
-export default function WhyAvailSection() {
-  // Reuse the approved external booking URL.
-  const rawBookingUrl =
-    homepageHero.consultationUrl?.trim();
+export default function WhyAvailSection({
+  content,
+  consultationUrl,
+}: WhyAvailSectionProps) {
+
+  // =================================
+  // CONTENT SOURCE
+  // =================================
+
+  // When CMS content is provided,
+  // use published CMS values.
+  //
+  // When no props are provided,
+  // retain the original approved
+  // static development preview.
+
+  const isCmsMode = content !== undefined;
+
+  // ---------------------------------
+  // SECTION HEADING
+  // ---------------------------------
+
+  const heading =
+    content?.heading ??
+    "Why Avail Aesthetics MD";
+
+  // ---------------------------------
+  // PROFILE IMAGE
+  // ---------------------------------
+
+  const imageSrc = isCmsMode
+    ? content.imageSrc
+    : whyAvailArtworkSrc;
+
+  const imageAlt =
+    content?.imageAlt ??
+    "Aesthetic skincare portrait";
+
+  // ---------------------------------
+  // AVAIL LOGO
+  // ---------------------------------
+
+  const logoSrc = isCmsMode
+    ? content.logoSrc
+    : "/avail/brand/logo.svg";
+
+  const logoAlt =
+    content?.logoAlt ??
+    "Avail Aesthetics MD";
+
+  // ---------------------------------
+  // OTHERS HEADING
+  // ---------------------------------
+
+  const othersHeading =
+    content?.othersHeading ??
+    "Others";
+
+  // ---------------------------------
+  // CONSULTATION BUTTON LABEL
+  // ---------------------------------
+
+  const consultationLabel =
+    content?.consultationLabel ??
+    "Book Your Consultation";
+
+  // ---------------------------------
+  // COMPARISON FEATURES
+  // ---------------------------------
+
+  const features = isCmsMode
+    ? content.features
+    : whyAvailFeatures;
+
+  // =================================
+  // CONSULTATION URL
+  // =================================
+
+  // Public homepage:
+  // Published Hero CMS URL.
+  //
+  // Static development preview:
+  // Original approved Hero URL.
+
+  const rawBookingUrl = (
+    isCmsMode
+      ? consultationUrl
+      : homepageHero.consultationUrl
+  )?.trim();
 
   const bookingUrl =
     rawBookingUrl &&
@@ -124,10 +222,10 @@ export default function WhyAvailSection() {
 
         <div className="relative hidden min-h-[650px] overflow-hidden lg:block">
 
-          {whyAvailArtworkSrc ? (
+          {imageSrc ? (
             <Image
-              src={whyAvailArtworkSrc}
-              alt="Aesthetic skincare portrait"
+              src={imageSrc}
+              alt={imageAlt}
               fill
               sizes="(min-width: 1800px) 684px, 38vw"
               className="object-cover object-center"
@@ -155,7 +253,7 @@ export default function WhyAvailSection() {
             id="why-avail-heading"
             className="text-center font-serif text-[clamp(1.8rem,3vw,3rem)] font-normal leading-tight tracking-[-0.025em] text-[#0B253B]"
           >
-            Why Avail Aesthetics MD
+            {heading}
           </h2>
 
           {/* COMPARISON GRID */}
@@ -167,7 +265,7 @@ export default function WhyAvailSection() {
               {/* Header spacer */}
               <div className="h-[90px] sm:h-[100px]" />
 
-              {whyAvailFeatures.map((feature) => (
+              {features.map((feature) => (
                 <div
                   key={feature.id}
                   className="flex h-[66px] items-center border-b border-[#0B253B]/15 pr-1 last:border-b-0 sm:h-[72px]"
@@ -183,19 +281,23 @@ export default function WhyAvailSection() {
             {/* AVAIL HIGHLIGHTED COLUMN */}
             <div className="overflow-hidden rounded-[18px] border border-[#52738B] bg-[#C9D8E8]">
 
-              {/* AVAIL LOGO */}
+              {/* DYNAMIC AVAIL LOGO */}
               <div className="flex h-[90px] items-center justify-center px-2 sm:h-[100px] sm:px-3">
-                <Image
-                  src="/avail/brand/logo.svg"
-                  alt="Avail Aesthetics MD"
-                  width={120}
-                  height={60}
-                  className="h-auto w-full max-w-[110px] object-contain"
-                />
+
+                {logoSrc ? (
+                  <Image
+                    src={logoSrc}
+                    alt={logoAlt}
+                    width={120}
+                    height={60}
+                    className="h-auto w-full max-w-[110px] object-contain"
+                  />
+                ) : null}
+
               </div>
 
               {/* AVAIL CHECKS */}
-              {whyAvailFeatures.map((feature) => (
+              {features.map((feature) => (
                 <div
                   key={feature.id}
                   className="mx-2 flex h-[66px] items-center justify-center border-b border-[#0B253B]/15 last:border-b-0 sm:mx-3 sm:h-[72px]"
@@ -214,11 +316,11 @@ export default function WhyAvailSection() {
 
               <div className="flex h-[90px] items-center justify-center sm:h-[100px]">
                 <h3 className="font-serif text-[12px] font-semibold uppercase tracking-wide text-[#0B253B] sm:text-[16px] lg:text-lg">
-                  Others
+                  {othersHeading}
                 </h3>
               </div>
 
-              {whyAvailFeatures.map((feature) => (
+              {features.map((feature) => (
                 <div
                   key={feature.id}
                   className="flex h-[66px] items-center justify-center border-b border-[#0B253B]/15 last:border-b-0 sm:h-[72px]"
@@ -241,14 +343,14 @@ export default function WhyAvailSection() {
                 href={bookingUrl}
                 className="inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full bg-[#0B253B] px-6 py-3 text-center text-[13px] font-medium text-white transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#17405C] hover:shadow-[0_10px_24px_rgba(11,37,59,0.2)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0B253B] sm:min-h-[48px] sm:px-8 sm:text-sm"
               >
-                Book Your Consultation
+                {consultationLabel}
               </a>
             ) : (
               <span
                 title="Booking URL will be configured through the CMS"
                 className="inline-flex min-h-[44px] cursor-default items-center justify-center rounded-full bg-[#0B253B] px-6 py-3 text-center text-[13px] font-medium text-white sm:min-h-[48px] sm:px-8 sm:text-sm"
               >
-                Book Your Consultation
+                {consultationLabel}
               </span>
             )}
 

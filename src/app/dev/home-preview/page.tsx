@@ -39,6 +39,7 @@ import type {
 
 const previewCategories: HomepageCategoriesContent = {
   heading: "Explore by Category",
+
   cards: categoryCards.map((card) => ({
     id: String(card.id),
     title: card.title,
@@ -56,6 +57,7 @@ const previewCategories: HomepageCategoriesContent = {
 
 const previewSignature: HomepageSignatureContent = {
   heading: "Signature Aesthetics",
+
   cards: signatureCards.map((card) => ({
     id: String(card.id),
     title: card.title,
@@ -113,7 +115,7 @@ export default function HomePreviewPage() {
           content={previewTestimonials}
         />
 
-        {/* 5. WHY AVAIL */}
+        {/* 5. STATIC WHY AVAIL */}
         <WhyAvailSection />
 
         {/* 6. OUR LOCATIONS */}

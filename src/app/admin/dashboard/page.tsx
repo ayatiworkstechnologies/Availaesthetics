@@ -282,12 +282,12 @@ async function DashboardContent() {
               >
                 Manage Signature Aesthetics →
               </Link>
-              {/* Homepage Testimonials CMS */}
+              {/* Homepage Why Avail CMS */}
               <Link
-                href="/admin/homepage/testimonials"
+                href="/admin/homepage/why-avail"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-[#356B63] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#28534D]"
               >
-                Manage Testimonials →
+                Manage Why Avail →
               </Link>
             </div>
 

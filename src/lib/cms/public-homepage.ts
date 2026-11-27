@@ -56,6 +56,32 @@ export type HomepageTestimonialsContent = {
 };
 
 // =====================================
+// PUBLIC WHY AVAIL TYPES
+// =====================================
+
+export type HomepageWhyAvailFeature = {
+  id: string;
+  label: string;
+  avail: boolean | null;
+  others: boolean | null;
+};
+
+export type HomepageWhyAvailContent = {
+  heading: string;
+
+  imageSrc: string | null;
+  imageAlt: string;
+
+  logoSrc: string | null;
+  logoAlt: string;
+
+  othersHeading: string;
+  consultationLabel: string;
+
+  features: HomepageWhyAvailFeature[];
+};
+
+// =====================================
 // COMPLETE PUBLIC HOMEPAGE DATA
 // =====================================
 
@@ -64,6 +90,7 @@ export type PublicHomepageData = {
   categories: HomepageCategoriesContent | null;
   signature: HomepageSignatureContent | null;
   testimonials: HomepageTestimonialsContent | null;
+  whyAvail: HomepageWhyAvailContent | null;
 };
 
 // =====================================
@@ -228,6 +255,10 @@ function isValidSignature(
   );
 }
 
+// =====================================
+// LEGACY HEADING SUPPORT
+// =====================================
+
 function withLegacyHeading(
   value: unknown,
   defaultHeading: string
@@ -236,7 +267,10 @@ function withLegacyHeading(
     !value ||
     typeof value !== "object" ||
     Array.isArray(value) ||
-    Object.prototype.hasOwnProperty.call(value, "heading")
+    Object.prototype.hasOwnProperty.call(
+      value,
+      "heading"
+    )
   ) {
     return value;
   }
@@ -285,7 +319,8 @@ function isValidTestimonials(
       return false;
     }
 
-    const testimonial = item as Record<string, unknown>;
+    const testimonial =
+      item as Record<string, unknown>;
 
     if (
       typeof testimonial.id !== "string" ||
@@ -306,6 +341,148 @@ function isValidTestimonials(
     }
 
     ids.add(testimonial.id);
+  }
+
+  return true;
+}
+
+// =====================================
+// WHY AVAIL IMAGE PATH VALIDATION
+// =====================================
+
+function isValidWhyAvailImagePath(
+  value: unknown
+): value is string | null {
+  if (value === null) {
+    return true;
+  }
+
+  if (
+    typeof value !== "string" ||
+    value.length > 500 ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    /[%?#\\\s\u0000-\u001F\u007F]/.test(value)
+  ) {
+    return false;
+  }
+
+  return !value.split("/").some(
+    (segment) =>
+      segment === "." || segment === ".."
+  );
+}
+
+// =====================================
+// WHY AVAIL FEATURE VALIDATION
+// =====================================
+
+function isValidWhyAvailFeature(
+  value: unknown
+): value is HomepageWhyAvailFeature {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const item = value as Record<string, unknown>;
+
+  return (
+    typeof item.id === "string" &&
+    item.id.trim().length > 0 &&
+    item.id.length <= 100 &&
+    typeof item.label === "string" &&
+    item.label.trim().length > 0 &&
+    item.label.length <= 200 &&
+    (
+      item.avail === true ||
+      item.avail === false ||
+      item.avail === null
+    ) &&
+    (
+      item.others === true ||
+      item.others === false ||
+      item.others === null
+    )
+  );
+}
+
+// =====================================
+// WHY AVAIL CONTENT VALIDATION
+// =====================================
+
+function isValidWhyAvail(
+  value: unknown
+): value is HomepageWhyAvailContent {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (
+    typeof data.heading !== "string" ||
+    !data.heading.trim() ||
+    data.heading.length > 200 ||
+
+    !isValidWhyAvailImagePath(data.imageSrc) ||
+    typeof data.imageAlt !== "string" ||
+    data.imageAlt.length > 250 ||
+
+    !isValidWhyAvailImagePath(data.logoSrc) ||
+    typeof data.logoAlt !== "string" ||
+    data.logoAlt.length > 250 ||
+
+    typeof data.othersHeading !== "string" ||
+    !data.othersHeading.trim() ||
+    data.othersHeading.length > 100 ||
+
+    typeof data.consultationLabel !== "string" ||
+    !data.consultationLabel.trim() ||
+    data.consultationLabel.length > 150 ||
+
+    !Array.isArray(data.features) ||
+    data.features.length < 1 ||
+    data.features.length > 5
+  ) {
+    return false;
+  }
+
+  // Require alt text when an image exists.
+  if (
+    (
+      data.imageSrc !== null &&
+      !data.imageAlt.trim()
+    ) ||
+    (
+      data.logoSrc !== null &&
+      !data.logoAlt.trim()
+    )
+  ) {
+    return false;
+  }
+
+  // Preserve feature order and reject
+  // duplicate feature identifiers.
+  const ids = new Set<string>();
+
+  for (const feature of data.features) {
+    if (!isValidWhyAvailFeature(feature)) {
+      return false;
+    }
+
+    if (ids.has(feature.id)) {
+      return false;
+    }
+
+    ids.add(feature.id);
   }
 
   return true;
@@ -337,8 +514,8 @@ async function fetchPublishedContent(
     }
   );
 
-  // 404 means this section has not been
-  // published yet.
+  // 404 means this section has not
+  // been published yet.
   if (response.status === 404) {
     return null;
   }
@@ -364,6 +541,7 @@ export async function getPublicHomepageData():
     categoriesData,
     signatureData,
     testimonialsData,
+    whyAvailData,
   ] = await Promise.all([
     fetchPublishedContent(
       "/api/v1/public/homepage/hero"
@@ -377,16 +555,26 @@ export async function getPublicHomepageData():
     fetchPublishedContent(
       "/api/v1/public/homepage/testimonials"
     ),
+    fetchPublishedContent(
+      "/api/v1/public/homepage/why-avail"
+    ),
   ]);
 
-  const normalizedCategoriesData = withLegacyHeading(
-    categoriesData,
-    "Explore by Category"
-  );
-  const normalizedSignatureData = withLegacyHeading(
-    signatureData,
-    "Signature Aesthetics"
-  );
+  const normalizedCategoriesData =
+    withLegacyHeading(
+      categoriesData,
+      "Explore by Category"
+    );
+
+  const normalizedSignatureData =
+    withLegacyHeading(
+      signatureData,
+      "Signature Aesthetics"
+    );
+
+  // ---------------------------------
+  // VALIDATE HERO
+  // ---------------------------------
 
   if (
     heroData !== null &&
@@ -397,37 +585,73 @@ export async function getPublicHomepageData():
     );
   }
 
+  // ---------------------------------
+  // VALIDATE CATEGORIES
+  // ---------------------------------
+
   if (
     normalizedCategoriesData !== null &&
-    !isValidCategories(normalizedCategoriesData)
+    !isValidCategories(
+      normalizedCategoriesData
+    )
   ) {
     throw new Error(
       "Invalid published Categories content"
     );
   }
 
+  // ---------------------------------
+  // VALIDATE SIGNATURE
+  // ---------------------------------
+
   if (
     normalizedSignatureData !== null &&
-    !isValidSignature(normalizedSignatureData)
+    !isValidSignature(
+      normalizedSignatureData
+    )
   ) {
     throw new Error(
       "Invalid published Signature content"
     );
   }
 
+  // ---------------------------------
+  // VALIDATE TESTIMONIALS
+  // ---------------------------------
+
   if (
     testimonialsData !== null &&
-    !isValidTestimonials(testimonialsData)
+    !isValidTestimonials(
+      testimonialsData
+    )
   ) {
     throw new Error(
       "Invalid published Testimonials content"
     );
   }
 
+  // ---------------------------------
+  // VALIDATE WHY AVAIL
+  // ---------------------------------
+
+  if (
+    whyAvailData !== null &&
+    !isValidWhyAvail(whyAvailData)
+  ) {
+    throw new Error(
+      "Invalid published Why Avail content"
+    );
+  }
+
+  // ---------------------------------
+  // RETURN ALL HOMEPAGE SECTIONS
+  // ---------------------------------
+
   return {
     hero: heroData,
     categories: normalizedCategoriesData,
     signature: normalizedSignatureData,
     testimonials: testimonialsData,
+    whyAvail: whyAvailData,
   };
 }

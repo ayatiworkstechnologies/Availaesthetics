@@ -10,3 +10,4 @@ from app.models.homepage_hero import HomepageHero
 from app.models.homepage_categories import HomepageCategories
 from app.models.homepage_signature import HomepageSignature
 from app.models.homepage_testimonials import HomepageTestimonials
+from app.models.homepage_why_avail import HomepageWhyAvail
