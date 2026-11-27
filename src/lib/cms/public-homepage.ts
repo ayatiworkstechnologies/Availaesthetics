@@ -6,7 +6,7 @@ import type {
 } from "./homepage-preview";
 
 // =====================================
-// 1. PUBLIC CATEGORY TYPES
+// PUBLIC CATEGORY TYPES
 // =====================================
 
 export type HomepageCategoryCard = {
@@ -23,7 +23,7 @@ export type HomepageCategoriesContent = {
 };
 
 // =====================================
-// 2. PUBLIC SIGNATURE TYPES
+// PUBLIC SIGNATURE TYPES
 // =====================================
 
 export type HomepageSignatureCard = {
@@ -39,17 +39,33 @@ export type HomepageSignatureContent = {
 };
 
 // =====================================
-// 3. COMPLETE HOMEPAGE DATA TYPE
+// PUBLIC TESTIMONIALS TYPES
+// =====================================
+
+export type HomepageTestimonialItem = {
+  id: string;
+  quote: string;
+  author: string;
+};
+
+export type HomepageTestimonialsContent = {
+  heading: string;
+  testimonials: HomepageTestimonialItem[];
+};
+
+// =====================================
+// COMPLETE PUBLIC HOMEPAGE DATA
 // =====================================
 
 export type PublicHomepageData = {
   hero: HomepageHeroContent | null;
   categories: HomepageCategoriesContent | null;
   signature: HomepageSignatureContent | null;
+  testimonials: HomepageTestimonialsContent | null;
 };
 
 // =====================================
-// 4. HERO VALIDATION
+// HERO VALIDATION
 // =====================================
 
 function isValidHero(
@@ -74,29 +90,25 @@ function isValidHero(
     "eligibilityText",
   ];
 
-  const validRequiredFields = requiredFields.every(
-    (field) =>
-      typeof data[field] === "string" &&
-      (data[field] as string).trim().length > 0
-  );
-
-  const validMobileImage =
-    data.mobileImageSrc == null ||
-    typeof data.mobileImageSrc === "string";
-
-  const validConsultationUrl =
-    data.consultationUrl == null ||
-    typeof data.consultationUrl === "string";
-
   return (
-    validRequiredFields &&
-    validMobileImage &&
-    validConsultationUrl
+    requiredFields.every(
+      (field) =>
+        typeof data[field] === "string" &&
+        (data[field] as string).trim().length > 0
+    ) &&
+    (
+      data.mobileImageSrc == null ||
+      typeof data.mobileImageSrc === "string"
+    ) &&
+    (
+      data.consultationUrl == null ||
+      typeof data.consultationUrl === "string"
+    )
   );
 }
 
 // =====================================
-// 5. SHARED IMAGE CARD VALIDATION
+// SHARED CARD VALIDATION
 // =====================================
 
 function isValidImageCard(
@@ -129,10 +141,6 @@ function isValidImageCard(
   );
 }
 
-// =====================================
-// 6. SHARED CARD ARRAY VALIDATION
-// =====================================
-
 function isValidCardsArray(
   value: unknown
 ): value is HomepageCategoryCard[] {
@@ -145,33 +153,27 @@ function isValidCardsArray(
 
   const ids = new Set<string>();
 
-  for (const card of value) {
-    if (!isValidImageCard(card)) {
+  for (const item of value) {
+    if (!isValidImageCard(item)) {
       return false;
     }
 
-    // Prevent duplicate IDs.
-    if (ids.has(card.id)) {
+    if (ids.has(item.id)) {
       return false;
     }
 
-    // Image alt text is required when
-    // an image is configured.
-    if (
-      card.imageSrc &&
-      !card.imageAlt.trim()
-    ) {
+    if (item.imageSrc && !item.imageAlt.trim()) {
       return false;
     }
 
-    ids.add(card.id);
+    ids.add(item.id);
   }
 
   return true;
 }
 
 // =====================================
-// 7. CATEGORIES VALIDATION
+// CATEGORIES VALIDATION
 // =====================================
 
 function isValidCategories(
@@ -197,7 +199,7 @@ function isValidCategories(
 }
 
 // =====================================
-// 8. SIGNATURE VALIDATION
+// SIGNATURE VALIDATION
 // =====================================
 
 function isValidSignature(
@@ -217,7 +219,71 @@ function isValidSignature(
 }
 
 // =====================================
-// 9. SHARED PUBLISHED API FETCH
+// TESTIMONIALS VALIDATION
+// =====================================
+
+function isValidTestimonials(
+  value: unknown
+): value is HomepageTestimonialsContent {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (
+    typeof data.heading !== "string" ||
+    !data.heading.trim() ||
+    data.heading.length > 200 ||
+    !Array.isArray(data.testimonials) ||
+    data.testimonials.length > 30
+  ) {
+    return false;
+  }
+
+  const ids = new Set<string>();
+
+  for (const item of data.testimonials) {
+    if (
+      !item ||
+      typeof item !== "object" ||
+      Array.isArray(item)
+    ) {
+      return false;
+    }
+
+    const testimonial = item as Record<string, unknown>;
+
+    if (
+      typeof testimonial.id !== "string" ||
+      !testimonial.id.trim() ||
+      testimonial.id.length > 100 ||
+      typeof testimonial.quote !== "string" ||
+      !testimonial.quote.trim() ||
+      testimonial.quote.length > 2000 ||
+      typeof testimonial.author !== "string" ||
+      !testimonial.author.trim() ||
+      testimonial.author.length > 150
+    ) {
+      return false;
+    }
+
+    if (ids.has(testimonial.id)) {
+      return false;
+    }
+
+    ids.add(testimonial.id);
+  }
+
+  return true;
+}
+
+// =====================================
+// SHARED PUBLISHED CONTENT FETCH
 // =====================================
 
 async function fetchPublishedContent(
@@ -242,13 +308,12 @@ async function fetchPublishedContent(
     }
   );
 
-  // The section has not been published.
-  // Do not display draft or preview data.
+  // 404 means this section has not been
+  // published yet.
   if (response.status === 404) {
     return null;
   }
 
-  // Backend errors must remain visible.
   if (!response.ok) {
     throw new Error(
       `Public CMS request failed: ${path} (HTTP ${response.status})`
@@ -259,18 +324,17 @@ async function fetchPublishedContent(
 }
 
 // =====================================
-// 10. GET COMPLETE PUBLISHED HOMEPAGE
+// GET PUBLISHED HOMEPAGE DATA
 // =====================================
 
 export async function getPublicHomepageData():
   Promise<PublicHomepageData> {
 
-  // Fetch all published CMS sections
-  // concurrently for better performance.
   const [
     heroData,
     categoriesData,
     signatureData,
+    testimonialsData,
   ] = await Promise.all([
     fetchPublishedContent(
       "/api/v1/public/homepage/hero"
@@ -281,24 +345,19 @@ export async function getPublicHomepageData():
     fetchPublishedContent(
       "/api/v1/public/homepage/signature"
     ),
+    fetchPublishedContent(
+      "/api/v1/public/homepage/testimonials"
+    ),
   ]);
-
-  // ---------------------------------
-  // Validate Homepage Hero
-  // ---------------------------------
 
   if (
     heroData !== null &&
     !isValidHero(heroData)
   ) {
     throw new Error(
-      "Invalid published Homepage Hero content"
+      "Invalid published Hero content"
     );
   }
-
-  // ---------------------------------
-  // Validate Explore by Category
-  // ---------------------------------
 
   if (
     categoriesData !== null &&
@@ -309,26 +368,28 @@ export async function getPublicHomepageData():
     );
   }
 
-  // ---------------------------------
-  // Validate Signature Aesthetics
-  // ---------------------------------
-
   if (
     signatureData !== null &&
     !isValidSignature(signatureData)
   ) {
     throw new Error(
-      "Invalid published Signature Aesthetics content"
+      "Invalid published Signature content"
     );
   }
 
-  // ---------------------------------
-  // Return published content only
-  // ---------------------------------
+  if (
+    testimonialsData !== null &&
+    !isValidTestimonials(testimonialsData)
+  ) {
+    throw new Error(
+      "Invalid published Testimonials content"
+    );
+  }
 
   return {
     hero: heroData,
     categories: categoriesData,
     signature: signatureData,
+    testimonials: testimonialsData,
   };
 }

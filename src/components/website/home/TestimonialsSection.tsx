@@ -10,9 +10,9 @@ import {
   type TransitionEvent,
 } from "react";
 
-import {
-  homepageTestimonials,
-} from "@/lib/cms/homepage-trust-preview";
+import type {
+  HomepageTestimonialsContent,
+} from "@/lib/cms/public-homepage";
 
 // -------------------------------------
 // SVG Icons
@@ -119,7 +119,14 @@ function CarouselArrow({
 // Testimonials Section
 // -------------------------------------
 
-export default function TestimonialsSection() {
+export default function TestimonialsSection({
+  content,
+}: {
+  content: HomepageTestimonialsContent;
+}) {
+  // Get published testimonials from CMS.
+  const homepageTestimonials = content.testimonials;
+
   const totalTestimonials =
     homepageTestimonials.length;
 
@@ -129,6 +136,7 @@ export default function TestimonialsSection() {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const movingRef = useRef(false);
+
   const touchStartRef = useRef<{
     x: number;
     y: number;
@@ -196,7 +204,7 @@ export default function TestimonialsSection() {
     observer.observe(viewport);
 
     return () => observer.disconnect();
-  }, []);
+  }, [totalTestimonials]);
 
   // -------------------------------------
   // Move carousel by one real card
@@ -237,7 +245,10 @@ export default function TestimonialsSection() {
 
     movingRef.current = true;
     setAnimate(true);
-    setPosition((current) => current + direction);
+
+    setPosition(
+      (current) => current + direction
+    );
   }
 
   // -------------------------------------
@@ -348,6 +359,7 @@ export default function TestimonialsSection() {
     }
   }
 
+  // Hide section if there are no testimonials.
   if (totalTestimonials === 0) {
     return null;
   }
@@ -369,7 +381,7 @@ export default function TestimonialsSection() {
     >
       <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-6 lg:px-12">
 
-        {/* SECTION HEADING - UNCHANGED */}
+        {/* DYNAMIC SECTION HEADING */}
         <h2
           id="testimonials-heading"
           className="
@@ -381,7 +393,7 @@ export default function TestimonialsSection() {
             text-[#0B253B]
           "
         >
-          Real Stories. Remarkable Results.
+          {content.heading}
         </h2>
 
         {/* CAROUSEL WRAPPER */}

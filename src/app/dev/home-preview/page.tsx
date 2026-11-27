@@ -1,179 +1,131 @@
 
-import { Suspense } from "react";
+import { notFound } from "next/navigation";
 
 import SiteHeader from "@/components/website/layout/SiteHeader";
 import SiteFooter from "@/components/website/layout/SiteFooter";
 
-// =====================================
-// EXISTING WEBSITE COMPONENTS
-// =====================================
-
 import HeroSection from "@/components/website/home/HeroSection";
-
 import ExploreByCategory from "@/components/website/home/ExploreByCategory";
-
 import SignatureAesthetics from "@/components/website/home/SignatureAesthetics";
-
 import TestimonialsSection from "@/components/website/home/TestimonialsSection";
-
 import WhyAvailSection from "@/components/website/home/WhyAvailSection";
-
 import OurLocationsSection from "@/components/website/home/OurLocationsSection";
-
 import FaqSection from "@/components/website/home/FaqSection";
-
 import BlogsSection from "@/components/website/home/BlogsSection";
 
-// =====================================
-// SHARED PUBLIC CMS SERVICE
-// =====================================
+import {
+  homepageHero,
+} from "@/lib/cms/homepage-preview";
 
 import {
-  getPublicHomepageData,
+  categoryCards,
+  allTreatmentsHref,
+  signatureCards,
+} from "@/lib/cms/homepage-sections-preview";
+
+import {
+  homepageTestimonials,
+} from "@/lib/cms/homepage-trust-preview";
+
+import type {
+  HomepageCategoriesContent,
+  HomepageSignatureContent,
+  HomepageTestimonialsContent,
 } from "@/lib/cms/public-homepage";
 
 // =====================================
-// 1. PUBLISHED HOMEPAGE SECTIONS
+// PREVIEW CATEGORY CONTENT
 // =====================================
 
-async function PublishedHomepageSections() {
-  // Retrieve published content from FastAPI.
-  const {
-    hero,
-    categories,
-    signature,
-  } = await getPublicHomepageData();
+const previewCategories: HomepageCategoriesContent = {
+  cards: categoryCards.map((card) => ({
+    id: String(card.id),
+    title: card.title,
+    imageSrc: card.imageSrc ?? null,
+    imageAlt: card.imageAlt ?? "",
+    href: card.href ?? null,
+  })),
 
-  return (
-    <>
-      {/* ---------------------------------
-          HOMEPAGE HERO
-          Dynamic CMS Content
-      --------------------------------- */}
-
-      {hero && (
-        <HeroSection content={hero} />
-      )}
-
-      {/* ---------------------------------
-          EXPLORE BY CATEGORY
-          Dynamic CMS Content
-      --------------------------------- */}
-
-      {categories && (
-        <ExploreByCategory
-          content={categories}
-        />
-      )}
-
-      {/* ---------------------------------
-          SIGNATURE AESTHETICS
-          Dynamic CMS Content
-      --------------------------------- */}
-
-      {signature && (
-        <SignatureAesthetics
-          content={signature}
-        />
-      )}
-    </>
-  );
-}
+  allTreatmentsHref: allTreatmentsHref ?? null,
+};
 
 // =====================================
-// 2. CMS LOADING FALLBACK
+// PREVIEW SIGNATURE CONTENT
 // =====================================
 
-function HomepageLoadingFallback() {
-  return (
-    <section
-      role="status"
-      aria-label="Loading homepage"
-      className="min-h-[50vh] animate-pulse bg-[#0B253B]/5"
-    >
-      <span className="sr-only">
-        Loading homepage content...
-      </span>
-    </section>
-  );
-}
+const previewSignature: HomepageSignatureContent = {
+  cards: signatureCards.map((card) => ({
+    id: String(card.id),
+    title: card.title,
+    imageSrc: card.imageSrc ?? null,
+    imageAlt: card.imageAlt ?? "",
+    href: card.href ?? null,
+  })),
+};
 
 // =====================================
-// 3. PUBLIC HOMEPAGE
+// PREVIEW TESTIMONIALS CONTENT
 // =====================================
 
-export default function HomePage() {
+const previewTestimonials: HomepageTestimonialsContent = {
+  heading: "Real Stories. Remarkable Results.",
+
+  testimonials: homepageTestimonials.map((item) => ({
+    id: String(item.id),
+    quote: item.quote ?? "",
+    author: item.author ?? "",
+  })),
+};
+
+// =====================================
+// DEVELOPMENT PREVIEW PAGE
+// =====================================
+
+export default function HomePreviewPage() {
+  // Never expose this preview in production.
+  if (process.env.NODE_ENV !== "development") {
+    notFound();
+  }
+
   return (
     <div className="min-h-screen bg-white">
-
-      {/* =================================
-          WEBSITE HEADER
-      ================================= */}
-
       <SiteHeader />
-
-      {/* =================================
-          MAIN WEBSITE CONTENT
-      ================================= */}
 
       <main id="main-content">
 
-        {/* ---------------------------------
-            DYNAMIC CMS SECTIONS
-            1. Homepage Hero
-            2. Explore by Category
-            3. Signature Aesthetics
-        --------------------------------- */}
+        {/* 1. STATIC HOMEPAGE HERO */}
+        <HeroSection content={homepageHero} />
 
-        <Suspense
-          fallback={<HomepageLoadingFallback />}
-        >
-          <PublishedHomepageSections />
-        </Suspense>
+        {/* 2. STATIC EXPLORE BY CATEGORY */}
+        <ExploreByCategory
+          content={previewCategories}
+        />
 
-        {/* ---------------------------------
-            4. TESTIMONIALS
-            Existing Website Component
-        --------------------------------- */}
+        {/* 3. STATIC SIGNATURE AESTHETICS */}
+        <SignatureAesthetics
+          content={previewSignature}
+        />
 
-        <TestimonialsSection />
+        {/* 4. STATIC TESTIMONIALS */}
+        <TestimonialsSection
+          content={previewTestimonials}
+        />
 
-        {/* ---------------------------------
-            5. WHY AVAIL AESTHETICS MD
-            Existing Website Component
-        --------------------------------- */}
-
+        {/* 5. WHY AVAIL */}
         <WhyAvailSection />
 
-        {/* ---------------------------------
-            6. OUR LOCATIONS
-            Existing Website Component
-        --------------------------------- */}
-
+        {/* 6. OUR LOCATIONS */}
         <OurLocationsSection />
 
-        {/* ---------------------------------
-            7. FAQ
-            Existing Website Component
-        --------------------------------- */}
-
+        {/* 7. FAQ */}
         <FaqSection />
 
-        {/* ---------------------------------
-            8. BLOGS
-            Existing Website Component
-        --------------------------------- */}
-
+        {/* 8. BLOGS */}
         <BlogsSection />
 
       </main>
 
-      {/* =================================
-          WEBSITE FOOTER
-      ================================= */}
-
-      <SiteFooter homeHref="/" />
-
+      <SiteFooter homeHref="/dev/home-preview" />
     </div>
   );
 }

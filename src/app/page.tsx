@@ -26,6 +26,7 @@ async function PublishedHomepageSections() {
     hero,
     categories,
     signature,
+    testimonials,
   } = await getPublicHomepageData();
 
   return (
@@ -43,6 +44,14 @@ async function PublishedHomepageSections() {
       {/* 3. PUBLISHED SIGNATURE AESTHETICS */}
       {signature && (
         <SignatureAesthetics content={signature} />
+      )}
+
+      {/* 4. PUBLISHED TESTIMONIALS */}
+      {testimonials && (
+        <TestimonialsSection
+          key={JSON.stringify(testimonials)}
+          content={testimonials}
+        />
       )}
     </>
   );
@@ -77,13 +86,10 @@ export default function HomePage() {
 
       <main id="main-content">
 
-        {/* DYNAMIC PUBLISHED CMS SECTIONS */}
+        {/* 1-4. DYNAMIC PUBLISHED CMS SECTIONS */}
         <Suspense fallback={<HomepageLoadingFallback />}>
           <PublishedHomepageSections />
         </Suspense>
-
-        {/* 4. TESTIMONIALS */}
-        <TestimonialsSection />
 
         {/* 5. WHY AVAIL AESTHETICS MD */}
         <WhyAvailSection />
