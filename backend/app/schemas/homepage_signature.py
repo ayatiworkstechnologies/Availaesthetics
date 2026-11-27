@@ -132,6 +132,13 @@ class HomepageSignatureCard(BaseModel):
 class HomepageSignatureContent(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    heading: str = Field(
+        default="Signature Aesthetics",
+        min_length=1,
+        max_length=200,
     )
 
     cards: list[HomepageSignatureCard] = Field(

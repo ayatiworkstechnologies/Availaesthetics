@@ -18,6 +18,7 @@ export type HomepageCategoryCard = {
 };
 
 export type HomepageCategoriesContent = {
+  heading: string;
   cards: HomepageCategoryCard[];
   allTreatmentsHref: string | null;
 };
@@ -35,6 +36,7 @@ export type HomepageSignatureCard = {
 };
 
 export type HomepageSignatureContent = {
+  heading: string;
   cards: HomepageSignatureCard[];
 };
 
@@ -190,6 +192,9 @@ function isValidCategories(
   const data = value as Record<string, unknown>;
 
   return (
+    typeof data.heading === "string" &&
+    data.heading.trim().length > 0 &&
+    data.heading.length <= 200 &&
     isValidCardsArray(data.cards) &&
     (
       data.allTreatmentsHref === null ||
@@ -215,7 +220,31 @@ function isValidSignature(
 
   const data = value as Record<string, unknown>;
 
-  return isValidCardsArray(data.cards);
+  return (
+    typeof data.heading === "string" &&
+    data.heading.trim().length > 0 &&
+    data.heading.length <= 200 &&
+    isValidCardsArray(data.cards)
+  );
+}
+
+function withLegacyHeading(
+  value: unknown,
+  defaultHeading: string
+): unknown {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.prototype.hasOwnProperty.call(value, "heading")
+  ) {
+    return value;
+  }
+
+  return {
+    ...(value as Record<string, unknown>),
+    heading: defaultHeading,
+  };
 }
 
 // =====================================
@@ -350,6 +379,15 @@ export async function getPublicHomepageData():
     ),
   ]);
 
+  const normalizedCategoriesData = withLegacyHeading(
+    categoriesData,
+    "Explore by Category"
+  );
+  const normalizedSignatureData = withLegacyHeading(
+    signatureData,
+    "Signature Aesthetics"
+  );
+
   if (
     heroData !== null &&
     !isValidHero(heroData)
@@ -360,8 +398,8 @@ export async function getPublicHomepageData():
   }
 
   if (
-    categoriesData !== null &&
-    !isValidCategories(categoriesData)
+    normalizedCategoriesData !== null &&
+    !isValidCategories(normalizedCategoriesData)
   ) {
     throw new Error(
       "Invalid published Categories content"
@@ -369,8 +407,8 @@ export async function getPublicHomepageData():
   }
 
   if (
-    signatureData !== null &&
-    !isValidSignature(signatureData)
+    normalizedSignatureData !== null &&
+    !isValidSignature(normalizedSignatureData)
   ) {
     throw new Error(
       "Invalid published Signature content"
@@ -388,8 +426,8 @@ export async function getPublicHomepageData():
 
   return {
     hero: heroData,
-    categories: categoriesData,
-    signature: signatureData,
+    categories: normalizedCategoriesData,
+    signature: normalizedSignatureData,
     testimonials: testimonialsData,
   };
 }

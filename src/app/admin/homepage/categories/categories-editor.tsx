@@ -13,6 +13,7 @@ type CategoryCard = {
 };
 
 type CategoriesContent = {
+  heading: string;
   cards: CategoryCard[];
   allTreatmentsHref: string | null;
 };
@@ -36,6 +37,7 @@ function copyContent(
   content: CategoriesContent
 ): CategoriesContent {
   return {
+    heading: content.heading,
     allTreatmentsHref: content.allTreatmentsHref,
     cards: content.cards.map((card) => ({ ...card })),
   };
@@ -87,8 +89,12 @@ export default function CategoriesEditor({
   initialData,
   previewContent,
 }: Props) {
-  const initialContent =
-    initialData.draft_content ?? previewContent;
+  const initialContent = initialData.draft_content ?? {
+    ...previewContent,
+    heading:
+      initialData.published_content?.heading ??
+      previewContent.heading,
+  };
 
   const [content, setContent] = useState(
     () => copyContent(initialContent)
@@ -253,6 +259,14 @@ export default function CategoriesEditor({
   // =====================================
 
   function validateContent(): string | null {
+    if (!content.heading.trim()) {
+      return "Section heading is required.";
+    }
+
+    if (content.heading.length > 200) {
+      return "Section heading exceeds 200 characters.";
+    }
+
     if (content.cards.length > 20) {
       return "Maximum 20 categories allowed.";
     }
@@ -503,6 +517,29 @@ export default function CategoriesEditor({
           Save a draft before publishing.
         </div>
       )}
+
+      {/* SECTION HEADING */}
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-8">
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-stone-700">
+            Section Heading
+          </span>
+          <input
+            value={content.heading}
+            maxLength={200}
+            disabled={busy !== null}
+            onChange={(event) => {
+              setContent((previous) => ({
+                ...previous,
+                heading: event.target.value,
+              }));
+              setMessage("");
+              setError("");
+            }}
+            className="w-full rounded-lg border border-stone-300 p-3 text-sm"
+          />
+        </label>
+      </section>
 
       {/* EDITOR HEADER */}
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-8">

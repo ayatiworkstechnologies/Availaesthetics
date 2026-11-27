@@ -134,7 +134,7 @@ export default function ExploreByCategory({
           id="explore-category-title"
           className="mb-7 text-center font-serif text-[clamp(1.85rem,3vw,2.8rem)] font-normal leading-tight tracking-[-0.025em] text-[#0B253B] sm:mb-8 lg:mb-10"
         >
-          Explore by Category
+          {content.heading}
         </h2>
 
         {/* CATEGORIES */}

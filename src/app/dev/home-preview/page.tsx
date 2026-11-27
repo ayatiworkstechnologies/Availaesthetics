@@ -38,6 +38,7 @@ import type {
 // =====================================
 
 const previewCategories: HomepageCategoriesContent = {
+  heading: "Explore by Category",
   cards: categoryCards.map((card) => ({
     id: String(card.id),
     title: card.title,
@@ -54,6 +55,7 @@ const previewCategories: HomepageCategoriesContent = {
 // =====================================
 
 const previewSignature: HomepageSignatureContent = {
+  heading: "Signature Aesthetics",
   cards: signatureCards.map((card) => ({
     id: String(card.id),
     title: card.title,

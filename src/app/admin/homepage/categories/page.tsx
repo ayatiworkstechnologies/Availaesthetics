@@ -20,6 +20,7 @@ type CategoryCard = {
 };
 
 type CategoriesContent = {
+  heading: string;
   cards: CategoryCard[];
   allTreatmentsHref: string | null;
 };
@@ -94,6 +95,7 @@ async function CategoriesAdminContent() {
   // used only to initialize an empty editor.
   // It is NOT automatically published.
   const previewContent: CategoriesContent = {
+    heading: "Explore by Category",
     cards: categoryCards.map((card) => ({
       id: String(card.id),
       title: card.title,

@@ -128,6 +128,13 @@ class HomepageCategoryCard(BaseModel):
 class HomepageCategoriesContent(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    heading: str = Field(
+        default="Explore by Category",
+        min_length=1,
+        max_length=200,
     )
 
     cards: list[HomepageCategoryCard] = Field(

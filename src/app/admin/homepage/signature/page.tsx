@@ -19,6 +19,7 @@ type SignatureCard = {
 };
 
 type SignatureContent = {
+  heading: string;
   cards: SignatureCard[];
 };
 
@@ -95,6 +96,7 @@ async function SignatureAdminContent() {
   // initialize a brand-new CMS editor.
   // It is NOT published automatically.
   const previewContent: SignatureContent = {
+    heading: "Signature Aesthetics",
     cards: signatureCards.map((card) => ({
       id: String(card.id),
       title: card.title,

@@ -13,6 +13,7 @@ type SignatureCard = {
 };
 
 type SignatureContent = {
+  heading: string;
   cards: SignatureCard[];
 };
 
@@ -35,6 +36,7 @@ function copyContent(
   value: SignatureContent
 ): SignatureContent {
   return {
+    heading: value.heading,
     cards: value.cards.map((card) => ({ ...card })),
   };
 }
@@ -115,8 +117,12 @@ export default function SignatureEditor({
   initialData,
   previewContent,
 }: Props) {
-  const startingContent =
-    initialData.draft_content ?? previewContent;
+  const startingContent = initialData.draft_content ?? {
+    ...previewContent,
+    heading:
+      initialData.published_content?.heading ??
+      previewContent.heading,
+  };
 
   const [content, setContent] = useState(
     () => copyContent(startingContent)
@@ -172,6 +178,7 @@ export default function SignatureEditor({
     value: string
   ) {
     setContent((previous) => ({
+      ...previous,
       cards: previous.cards.map((card) => {
         if (card.id !== id) return card;
 
@@ -214,6 +221,7 @@ export default function SignatureEditor({
     };
 
     setContent((previous) => ({
+      ...previous,
       cards: [...previous.cards, newCard],
     }));
 
@@ -235,6 +243,7 @@ export default function SignatureEditor({
     if (!confirmed) return;
 
     setContent((previous) => ({
+      ...previous,
       cards: previous.cards.filter(
         (card) => card.id !== id
       ),
@@ -271,7 +280,7 @@ export default function SignatureEditor({
         cards[index],
       ];
 
-      return { cards };
+      return { ...previous, cards };
     });
 
     setError("");
@@ -283,6 +292,14 @@ export default function SignatureEditor({
   // =====================================
 
   function validateContent(): string | null {
+    if (!content.heading.trim()) {
+      return "Section heading is required.";
+    }
+
+    if (content.heading.length > 200) {
+      return "Section heading exceeds 200 characters.";
+    }
+
     if (content.cards.length > 20) {
       return "Maximum 20 treatment cards allowed.";
     }
@@ -542,6 +559,26 @@ export default function SignatureEditor({
           before publishing them.
         </div>
       )}
+
+      {/* SECTION HEADING */}
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-8">
+        <EditorField label="Section Heading">
+          <input
+            value={content.heading}
+            maxLength={200}
+            disabled={busy !== null}
+            onChange={(event) => {
+              setContent((previous) => ({
+                ...previous,
+                heading: event.target.value,
+              }));
+              setError("");
+              setMessage("");
+            }}
+            className="w-full rounded-lg border border-stone-300 p-3 text-sm"
+          />
+        </EditorField>
+      </section>
 
       {/* CARD EDITOR */}
       <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-8">
