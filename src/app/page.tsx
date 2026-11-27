@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 
 import SiteHeader from "@/components/website/layout/SiteHeader";
@@ -28,14 +27,13 @@ async function PublishedHomepageSections() {
     signature,
     testimonials,
     whyAvail,
+    locations,
   } = await getPublicHomepageData();
 
   return (
     <>
       {/* 1. PUBLISHED HERO */}
-      {hero && (
-        <HeroSection content={hero} />
-      )}
+      {hero && <HeroSection content={hero} />}
 
       {/* 2. PUBLISHED EXPLORE BY CATEGORY */}
       {categories && (
@@ -55,12 +53,22 @@ async function PublishedHomepageSections() {
         />
       )}
 
-      {/* 5. PUBLISHED WHY AVAIL AESTHETICS MD */}
+      {/* 5. PUBLISHED WHY AVAIL */}
       {whyAvail && (
         <WhyAvailSection
           content={whyAvail}
-          consultationUrl={
-            hero?.consultationUrl ?? null
+          consultationUrl={hero?.consultationUrl ?? null}
+        />
+      )}
+
+      {/* 6. PUBLISHED OUR LOCATIONS */}
+      {locations && locations.locations.length > 0 && (
+        <OurLocationsSection
+          heading={locations.heading}
+          description={locations.description}
+          locations={locations.locations}
+          defaultSelectedLocationId={
+            locations.defaultSelectedLocationId
           }
         />
       )}
@@ -96,21 +104,16 @@ export default function HomePage() {
       <SiteHeader />
 
       <main id="main-content">
-
-        {/* 1-5. DYNAMIC PUBLISHED CMS SECTIONS */}
+        {/* 1–6. PUBLISHED CMS SECTIONS */}
         <Suspense fallback={<HomepageLoadingFallback />}>
           <PublishedHomepageSections />
         </Suspense>
-
-        {/* 6. OUR LOCATIONS */}
-        <OurLocationsSection />
 
         {/* 7. FAQ */}
         <FaqSection />
 
         {/* 8. BLOGS */}
         <BlogsSection />
-
       </main>
 
       <SiteFooter homeHref="/" />

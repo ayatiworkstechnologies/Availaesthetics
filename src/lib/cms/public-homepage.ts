@@ -1,9 +1,12 @@
-
 import "server-only";
 
 import type {
   HomepageHeroContent,
 } from "./homepage-preview";
+
+import type {
+  HomepageLocation,
+} from "./homepage-locations-preview";
 
 // =====================================
 // PUBLIC CATEGORY TYPES
@@ -68,21 +71,28 @@ export type HomepageWhyAvailFeature = {
 
 export type HomepageWhyAvailContent = {
   heading: string;
-
   imageSrc: string | null;
   imageAlt: string;
-
   logoSrc: string | null;
   logoAlt: string;
-
   othersHeading: string;
   consultationLabel: string;
-
   features: HomepageWhyAvailFeature[];
 };
 
 // =====================================
-// COMPLETE PUBLIC HOMEPAGE DATA
+// PUBLIC LOCATIONS TYPE
+// =====================================
+
+export type PublishedHomepageLocations = {
+  heading: string;
+  description: string;
+  locations: HomepageLocation[];
+  defaultSelectedLocationId: string | null;
+};
+
+// =====================================
+// COMPLETE HOMEPAGE CMS DATA
 // =====================================
 
 export type PublicHomepageData = {
@@ -91,6 +101,7 @@ export type PublicHomepageData = {
   signature: HomepageSignatureContent | null;
   testimonials: HomepageTestimonialsContent | null;
   whyAvail: HomepageWhyAvailContent | null;
+  locations: PublishedHomepageLocations | null;
 };
 
 // =====================================
@@ -347,7 +358,7 @@ function isValidTestimonials(
 }
 
 // =====================================
-// WHY AVAIL IMAGE PATH VALIDATION
+// WHY AVAIL IMAGE VALIDATION
 // =====================================
 
 function isValidWhyAvailImagePath(
@@ -455,7 +466,6 @@ function isValidWhyAvail(
     return false;
   }
 
-  // Require alt text when an image exists.
   if (
     (
       data.imageSrc !== null &&
@@ -469,8 +479,6 @@ function isValidWhyAvail(
     return false;
   }
 
-  // Preserve feature order and reject
-  // duplicate feature identifiers.
   const ids = new Set<string>();
 
   for (const feature of data.features) {
@@ -486,6 +494,152 @@ function isValidWhyAvail(
   }
 
   return true;
+}
+
+// =====================================
+// PUBLISHED HOMEPAGE LOCATION VALIDATION
+// =====================================
+
+type PublicHomepageLocationsResponse = {
+  heading: string;
+  description: string;
+  defaultSelectedLocationId: string | null;
+  locations: HomepageLocation[];
+};
+
+function isRecord(
+  value: unknown
+): value is Record<string, unknown> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  );
+}
+
+function validGoogleMapsUrl(
+  value: string,
+  embedOnly = false
+): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    const isGoogleHost =
+      hostname === "google.com" ||
+      hostname.endsWith(".google.com");
+    const isMapsShortLink =
+      hostname === "maps.app.goo.gl";
+
+    if (
+      url.protocol !== "https:" ||
+      (!isGoogleHost && !isMapsShortLink) ||
+      (embedOnly &&
+        (!isGoogleHost ||
+          !url.pathname.startsWith("/maps/embed")))
+    ) {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function isHomepageLocation(
+  value: unknown
+): value is HomepageLocation {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    Boolean(value.id.trim()) &&
+    typeof value.name === "string" &&
+    Boolean(value.name.trim()) &&
+    typeof value.regionLabel === "string" &&
+    typeof value.addressLine1 === "string" &&
+    Boolean(value.addressLine1.trim()) &&
+    typeof value.addressLine2 === "string" &&
+    typeof value.city === "string" &&
+    Boolean(value.city.trim()) &&
+    typeof value.state === "string" &&
+    Boolean(value.state.trim()) &&
+    typeof value.postalCode === "string" &&
+    typeof value.country === "string" &&
+    Boolean(value.country.trim()) &&
+    (value.phone === null || typeof value.phone === "string") &&
+    (value.phoneHref === null ||
+      (typeof value.phoneHref === "string" &&
+        value.phoneHref.startsWith("tel:"))) &&
+    typeof value.mapsUrl === "string" &&
+    validGoogleMapsUrl(value.mapsUrl) !== null &&
+    typeof value.mapEmbedUrl === "string" &&
+    validGoogleMapsUrl(value.mapEmbedUrl, true) !== null
+  );
+}
+
+// =====================================
+// VALIDATE PUBLISHED LOCATIONS RESPONSE
+// =====================================
+
+function normalizePublishedLocations(
+  value: unknown
+): PublishedHomepageLocations | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (
+    !isRecord(value) ||
+    typeof value.heading !== "string" ||
+    !value.heading.trim() ||
+    typeof value.description !== "string" ||
+    !value.description.trim() ||
+    !Array.isArray(value.locations) ||
+    value.locations.length > 100 ||
+    !value.locations.every(isHomepageLocation) ||
+    !(
+      value.defaultSelectedLocationId === null ||
+      (
+        typeof value.defaultSelectedLocationId === "string" &&
+        Boolean(value.defaultSelectedLocationId.trim())
+      )
+    )
+  ) {
+    throw new Error(
+      "Invalid published Homepage Locations response"
+    );
+  }
+
+  const response =
+    value as unknown as PublicHomepageLocationsResponse;
+
+  const ids = new Set<string>();
+  for (const location of response.locations) {
+    if (ids.has(location.id)) {
+      throw new Error("Duplicate published Homepage Location ID");
+    }
+    ids.add(location.id);
+  }
+
+  const preferred = response.defaultSelectedLocationId;
+
+  return {
+    heading: response.heading,
+    description: response.description,
+    locations: response.locations,
+    defaultSelectedLocationId:
+      preferred &&
+      response.locations.some(
+        (clinic) => clinic.id === preferred
+      )
+        ? preferred
+        : (response.locations[0]?.id ?? null),
+  };
 }
 
 // =====================================
@@ -514,8 +668,8 @@ async function fetchPublishedContent(
     }
   );
 
-  // 404 means this section has not
-  // been published yet.
+  // A 404 means the section is
+  // not published yet.
   if (response.status === 404) {
     return null;
   }
@@ -530,18 +684,18 @@ async function fetchPublishedContent(
 }
 
 // =====================================
-// GET PUBLISHED HOMEPAGE DATA
+// GET COMPLETE PUBLISHED HOMEPAGE DATA
 // =====================================
 
 export async function getPublicHomepageData():
   Promise<PublicHomepageData> {
-
   const [
     heroData,
     categoriesData,
     signatureData,
     testimonialsData,
     whyAvailData,
+    locationsData,
   ] = await Promise.all([
     fetchPublishedContent(
       "/api/v1/public/homepage/hero"
@@ -557,6 +711,9 @@ export async function getPublicHomepageData():
     ),
     fetchPublishedContent(
       "/api/v1/public/homepage/why-avail"
+    ),
+    fetchPublishedContent(
+      "/api/v1/public/homepage/locations"
     ),
   ]);
 
@@ -591,9 +748,7 @@ export async function getPublicHomepageData():
 
   if (
     normalizedCategoriesData !== null &&
-    !isValidCategories(
-      normalizedCategoriesData
-    )
+    !isValidCategories(normalizedCategoriesData)
   ) {
     throw new Error(
       "Invalid published Categories content"
@@ -606,9 +761,7 @@ export async function getPublicHomepageData():
 
   if (
     normalizedSignatureData !== null &&
-    !isValidSignature(
-      normalizedSignatureData
-    )
+    !isValidSignature(normalizedSignatureData)
   ) {
     throw new Error(
       "Invalid published Signature content"
@@ -621,9 +774,7 @@ export async function getPublicHomepageData():
 
   if (
     testimonialsData !== null &&
-    !isValidTestimonials(
-      testimonialsData
-    )
+    !isValidTestimonials(testimonialsData)
   ) {
     throw new Error(
       "Invalid published Testimonials content"
@@ -644,7 +795,7 @@ export async function getPublicHomepageData():
   }
 
   // ---------------------------------
-  // RETURN ALL HOMEPAGE SECTIONS
+  // RETURN COMPLETE HOMEPAGE
   // ---------------------------------
 
   return {
@@ -653,5 +804,8 @@ export async function getPublicHomepageData():
     signature: normalizedSignatureData,
     testimonials: testimonialsData,
     whyAvail: whyAvailData,
+    locations: normalizePublishedLocations(
+      locationsData
+    ),
   };
 }

@@ -11,3 +11,6 @@ from app.models.homepage_categories import HomepageCategories
 from app.models.homepage_signature import HomepageSignature
 from app.models.homepage_testimonials import HomepageTestimonials
 from app.models.homepage_why_avail import HomepageWhyAvail
+from app.models.homepage_locations_settings import (
+    HomepageLocationsSettings,
+)

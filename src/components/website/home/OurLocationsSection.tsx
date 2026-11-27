@@ -1,16 +1,44 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   homepageLocations,
   type HomepageLocation,
 } from "@/lib/cms/homepage-locations-preview";
 
-// --------------------------------------
-// SVG Icons
-// --------------------------------------
+// =====================================
+// CAROUSEL CONFIGURATION
+// =====================================
+
+const CARDS_PER_SLIDE = 2;
+const AUTO_SLIDE_INTERVAL = 5000;
+
+// =====================================
+// DEFAULT STATIC PREVIEW CONTENT
+// =====================================
+
+const DEFAULT_HEADING = "Our Locations";
+
+const DEFAULT_DESCRIPTION =
+  "One Avail Aesthetics MD, two clinics across Greater Houston. " +
+  "Each clinic offers personalized aesthetic and wellness " +
+  "treatments with its own team, services, and booking options.";
+
+// =====================================
+// DYNAMIC SECTION PROPS
+// =====================================
+
+export type OurLocationsSectionProps = {
+  locations?: HomepageLocation[];
+  heading?: string;
+  description?: string;
+  defaultSelectedLocationId?: string | null;
+};
+
+// =====================================
+// SVG ICONS
+// =====================================
 
 function ExternalArrowIcon() {
   return (
@@ -49,9 +77,9 @@ function LocationPinIcon() {
   );
 }
 
-// --------------------------------------
-// Clinic Location Card
-// --------------------------------------
+// =====================================
+// CLINIC LOCATION CARD
+// =====================================
 
 type LocationCardProps = {
   location: HomepageLocation;
@@ -66,10 +94,22 @@ function LocationCard({
   selected,
   onSelect,
 }: LocationCardProps) {
+  const cityStatePostal = [
+    location.city,
+    [
+      location.state,
+      location.postalCode,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+
   const formattedAddress = [
     location.addressLine1,
     location.addressLine2,
-    `${location.city}, ${location.state} ${location.postalCode}`,
+    cityStatePostal,
   ]
     .filter(Boolean)
     .join(", ");
@@ -91,7 +131,7 @@ function LocationCard({
         }
       `}
     >
-      {/* Select this location */}
+      {/* SELECT LOCATION */}
       <button
         type="button"
         onClick={onSelect}
@@ -99,23 +139,23 @@ function LocationCard({
         aria-label={`Show ${location.name} clinic on the map`}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B253B] sm:gap-4"
       >
-        {/* Number circle */}
+        {/* LOCATION NUMBER */}
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B253B] text-xs font-semibold text-white sm:h-9 sm:w-9">
           {index + 1}
         </span>
 
-        {/* Content */}
+        {/* LOCATION DETAILS */}
         <span className="min-w-0 flex-1">
-
-          {/* Clinic title and subheading */}
           <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-serif text-[22px] leading-tight text-[#0B253B] sm:text-[26px]">
               {location.name}
             </span>
 
-            <span className="text-[11px] font-medium text-[#65758A] sm:text-xs">
-              {location.regionLabel}
-            </span>
+            {location.regionLabel && (
+              <span className="text-[11px] font-medium text-[#65758A] sm:text-xs">
+                {location.regionLabel}
+              </span>
+            )}
 
             {selected && (
               <span className="rounded bg-[#E2ECFF] px-2 py-1 text-[10px] font-medium text-[#0B253B]">
@@ -124,22 +164,21 @@ function LocationCard({
             )}
           </span>
 
-          {/* Clinic address */}
+          {/* ADDRESS */}
           <span className="mt-3 block text-[12px] leading-[1.7] text-[#0B253B] sm:text-[13px]">
             {formattedAddress}
           </span>
 
-          {/* Phone number */}
+          {/* PHONE */}
           {location.phone && (
             <span className="mt-1.5 block text-[12px] font-medium text-[#0B253B] sm:text-[13px]">
               {location.phone}
             </span>
           )}
-
         </span>
       </button>
 
-      {/* Call CTA — separate from selection button */}
+      {/* CALL CTA */}
       {location.phoneHref && (
         <a
           href={location.phoneHref}
@@ -166,22 +205,194 @@ function LocationCard({
   );
 }
 
-// --------------------------------------
-// Our Locations Main Section
-// --------------------------------------
+// =====================================
+// OUR LOCATIONS MAIN SECTION
+// =====================================
 
-export default function OurLocationsSection() {
-  // Default Cypress, matching your screenshot.
+export default function OurLocationsSection({
+  locations = homepageLocations,
+  heading = DEFAULT_HEADING,
+  description = DEFAULT_DESCRIPTION,
+  defaultSelectedLocationId,
+}: OurLocationsSectionProps) {
+  // ---------------------------------
+  // INITIAL SELECTED LOCATION
+  // ---------------------------------
+
+  const initialSelectedId =
+    defaultSelectedLocationId &&
+    locations.some(
+      (location) =>
+        location.id === defaultSelectedLocationId
+    )
+      ? defaultSelectedLocationId
+      : locations.some(
+          (location) => location.id === "cypress"
+        )
+        ? "cypress"
+        : (locations[0]?.id ?? "");
+
   const [selectedId, setSelectedId] =
-    useState("cypress");
+    useState(initialSelectedId);
+
+  // ---------------------------------
+  // CAROUSEL STATE
+  // ---------------------------------
+
+  const [activeSlide, setActiveSlide] =
+    useState(0);
+
+  const [isPaused, setIsPaused] =
+    useState(false);
+
+  const [
+    prefersReducedMotion,
+    setPrefersReducedMotion,
+  ] = useState(false);
+
+  // ---------------------------------
+  // CONDITIONAL CAROUSEL
+  // ---------------------------------
+
+  const isCarousel =
+    locations.length > CARDS_PER_SLIDE;
+
+  const slides: HomepageLocation[][] = [];
+
+  for (
+    let index = 0;
+    index < locations.length;
+    index += CARDS_PER_SLIDE
+  ) {
+    slides.push(
+      locations.slice(
+        index,
+        index + CARDS_PER_SLIDE
+      )
+    );
+  }
+
+  const totalSlides = slides.length;
+
+  const visibleSlide =
+    totalSlides > 0
+      ? activeSlide % totalSlides
+      : 0;
+
+  // ---------------------------------
+  // CURRENTLY SELECTED MAP LOCATION
+  // ---------------------------------
 
   const selectedLocation =
-    homepageLocations.find(
-      (location) => location.id === selectedId
-    ) ?? homepageLocations[0];
+    locations.find(
+      (location) =>
+        location.id === selectedId
+    ) ??
+    locations.find(
+      (location) =>
+        location.id === initialSelectedId
+    ) ??
+    locations[0];
+
+  // ---------------------------------
+  // REDUCED MOTION
+  // ---------------------------------
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+
+    const updatePreference = () => {
+      setPrefersReducedMotion(
+        mediaQuery.matches
+      );
+    };
+
+    updatePreference();
+
+    mediaQuery.addEventListener(
+      "change",
+      updatePreference
+    );
+
+    return () => {
+      mediaQuery.removeEventListener(
+        "change",
+        updatePreference
+      );
+    };
+  }, []);
+
+  // ---------------------------------
+  // AUTOMATIC CAROUSEL
+  // ---------------------------------
+
+  useEffect(() => {
+    if (
+      !isCarousel ||
+      totalSlides <= 1 ||
+      isPaused ||
+      prefersReducedMotion
+    ) {
+      return;
+    }
+
+    const interval = window.setInterval(
+      () => {
+        setActiveSlide(
+          (current) =>
+            (current + 1) % totalSlides
+        );
+      },
+      AUTO_SLIDE_INTERVAL
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [
+    isCarousel,
+    totalSlides,
+    isPaused,
+    prefersReducedMotion,
+  ]);
+
+  // ---------------------------------
+  // NO LOCATIONS
+  // ---------------------------------
 
   if (!selectedLocation) {
     return null;
+  }
+
+  // ---------------------------------
+  // RENDER LOCATION CARDS
+  // ---------------------------------
+
+  function renderLocationCards(
+    items: HomepageLocation[]
+  ) {
+    return items.map((location) => {
+      const index = locations.findIndex(
+        (item) =>
+          item.id === location.id
+      );
+
+      return (
+        <LocationCard
+          key={location.id}
+          location={location}
+          index={index}
+          selected={
+            selectedLocation.id === location.id
+          }
+          onSelect={() => {
+            setSelectedId(location.id);
+          }}
+        />
+      );
+    });
   }
 
   return (
@@ -195,12 +406,10 @@ export default function OurLocationsSection() {
         {/* TWO-COLUMN DESKTOP LAYOUT */}
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:gap-12">
 
-          {/* ============================
-              LEFT COLUMN
-          ============================ */}
+          {/* LEFT COLUMN */}
           <div className="min-w-0">
 
-            {/* Heading */}
+            {/* HEADING */}
             <h2
               id="our-locations-title"
               className="
@@ -211,45 +420,127 @@ export default function OurLocationsSection() {
                 text-[#0B253B]
               "
             >
-              Our Locations
+              {heading}
             </h2>
 
-            {/* Description */}
+            {/* DESCRIPTION */}
             <p className="mt-4 max-w-[570px] text-[13px] leading-[1.9] text-[#64748B] sm:text-[15px]">
-              One Avail Aesthetics MD, two clinics
-              across Greater Houston. Each clinic
-              offers personalized aesthetic and wellness
-              treatments with its own team, services,
-              and booking options.
+              {description}
             </p>
 
-            {/* Location cards */}
-            <div className="mt-9 space-y-3 sm:mt-12 lg:mt-16">
+            {/* LOCATION CARDS */}
+            <div className="mt-9 sm:mt-12 lg:mt-16">
+              {!isCarousel ? (
+                // 1–2 NORMAL LOCATION CARDS
+                <div className="space-y-3">
+                  {renderLocationCards(locations)}
+                </div>
+              ) : (
+                // 3+ LOCATIONS: CAROUSEL
+                <div
+                  aria-label="Clinic locations carousel"
+                  role="region"
+                  aria-roledescription="carousel"
+                  onMouseEnter={() =>
+                    setIsPaused(true)
+                  }
+                  onMouseLeave={() =>
+                    setIsPaused(false)
+                  }
+                  onFocusCapture={() =>
+                    setIsPaused(true)
+                  }
+                  onBlurCapture={(event) => {
+                    if (
+                      !event.currentTarget.contains(
+                        event.relatedTarget
+                      )
+                    ) {
+                      setIsPaused(false);
+                    }
+                  }}
+                >
+                  {/* SLIDING CARDS */}
+                  <div className="overflow-hidden">
+                    <div
+                      className="flex transition-transform duration-500 ease-in-out motion-reduce:transition-none"
+                      style={{
+                        transform:
+                          `translateX(-${visibleSlide * 100}%)`,
+                      }}
+                    >
+                      {slides.map(
+                        (slide, slideIndex) => (
+                          <div
+                            key={
+                              slide[0]?.id ??
+                              slideIndex
+                            }
+                            className="w-full shrink-0 space-y-3"
+                            aria-hidden={
+                              visibleSlide !== slideIndex
+                            }
+                            inert={
+                              visibleSlide !== slideIndex
+                            }
+                          >
+                            {renderLocationCards(slide)}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-              {homepageLocations.map(
-                (location, index) => (
-                  <LocationCard
-                    key={location.id}
-                    location={location}
-                    index={index}
-                    selected={
-                      selectedLocation.id === location.id
-                    }
-                    onSelect={() =>
-                      setSelectedId(location.id)
-                    }
-                  />
-                )
+                  {/* SLIDE INDICATORS */}
+                  <div
+                    className="mt-5 flex items-center justify-center gap-2.5"
+                    aria-label="Location carousel pages"
+                  >
+                    {slides.map(
+                      (slide, index) => (
+                        <button
+                          key={
+                            slide[0]?.id ??
+                            index
+                          }
+                          type="button"
+                          onClick={() =>
+                            setActiveSlide(index)
+                          }
+                          aria-label={
+                            `Show location slide ${index + 1} of ${totalSlides}`
+                          }
+                          aria-current={
+                            visibleSlide === index
+                              ? "true"
+                              : undefined
+                          }
+                          className="flex min-h-9 min-w-9 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B253B]"
+                        >
+                          <span
+                            className={`
+                              block h-[7px]
+                              rounded-full
+                              transition-all
+                              duration-300
+                              ${
+                                visibleSlide === index
+                                  ? "w-6 bg-[#0B253B]"
+                                  : "w-[7px] bg-[#B8C4D0]"
+                              }
+                            `}
+                          />
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
               )}
-
             </div>
           </div>
 
-          {/* ============================
-              RIGHT COLUMN - GOOGLE MAPS
-          ============================ */}
+          {/* RIGHT COLUMN: GOOGLE MAPS */}
           <div className="min-w-0">
-
             <div
               className="
                 relative h-[350px] w-full
@@ -260,8 +551,7 @@ export default function OurLocationsSection() {
                 lg:h-[640px]
               "
             >
-
-              {/* Actual Google Maps Embed */}
+              {/* DYNAMIC GOOGLE MAPS */}
               <iframe
                 key={selectedLocation.id}
                 src={selectedLocation.mapEmbedUrl}
@@ -274,7 +564,7 @@ export default function OurLocationsSection() {
                 className="absolute inset-0 h-full w-full border-0"
               />
 
-              {/* Location badge / directions link */}
+              {/* OPEN DIRECTIONS */}
               <a
                 href={selectedLocation.mapsUrl}
                 target="_blank"
@@ -306,14 +596,15 @@ export default function OurLocationsSection() {
                 </span>
 
                 <span>
-                  {selectedLocation.name}, Texas
+                  {selectedLocation.name}
+                  {selectedLocation.state
+                    ? `, ${selectedLocation.state}`
+                    : ""}
                 </span>
 
                 <ExternalArrowIcon />
               </a>
-
             </div>
-
           </div>
         </div>
       </div>
